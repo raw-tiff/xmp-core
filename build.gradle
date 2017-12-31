@@ -11,7 +11,7 @@ apply plugin: 'java-library'
 apply plugin: 'maven'
 apply plugin: 'com.jfrog.bintray'
 
-jar.baseName = 'xmpcore'
+jar.baseName = 'xmp-core'
 
 group	= 'com.github.gasrios.xmp'
 version	= '5.1.3'
@@ -19,12 +19,12 @@ version	= '5.1.3'
 bintray {
 	user	= project.property('bintrayUser')
 	key		= project.property('bintrayApiKey')
-	dryRun	= false
+	dryRun	= true
 	publish	= true
 	configurations = ['archives']
 	pkg {
 		repo		= 'maven'
-		name		= 'xmpcore'
+		name		= 'xmp-core'
 		licenses	= ['BSD 3-Clause']
 		vcsUrl		= 'https://github.com/gasrios/XMPCoreJava.git'
 	}

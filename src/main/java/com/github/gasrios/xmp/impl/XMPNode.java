@@ -22,81 +22,39 @@ import com.github.gasrios.xmp.XMPError;
 import com.github.gasrios.xmp.XMPException;
 import com.github.gasrios.xmp.options.PropertyOptions;
 
+class XMPNode implements Comparable<XMPNode> {
 
-/**
- * A node in the internally XMP tree, which can be a schema node, a property node, an array node,
- * an array item, a struct node or a qualifier node (without '?').
- * 
- * Possible improvements:
- * 
- * 1. The kind Node of node might be better represented by a class-hierarchy of different nodes.
- * 2. The array type should be an enum
- * 3. isImplicitNode should be removed completely and replaced by return values of fi.
- * 4. hasLanguage, hasType should be automatically maintained by XMPNode
- * 
- * @since 21.02.2006
- */
-class XMPNode implements Comparable<XMPNode>
-{
 	private static final ListIterator<XMPNode> LIST_ITERATOR = new Vector<XMPNode>().listIterator();
-	/** name of the node, contains different information depending of the node kind */
+
 	private String name;
-	/** value of the node, contains different information depending of the node kind */
+
 	private String value;
-	/** link to the parent node */
+
 	private XMPNode parent;
-	/** list of child nodes, lazy initialized */
-	private List<XMPNode> children = null; 
-	/** list of qualifier of the node, lazy initialized */
+
+	private List<XMPNode> children = null;
+
 	private List<XMPNode> qualifier = null;
-	/** options describing the kind of the node */
+
 	private PropertyOptions options = null;
-	
-	// internal processing options
-	
-	/** flag if the node is implicitly created */
+
 	private boolean implicit;
-	/** flag if the node has aliases */
+
 	private boolean hasAliases;
-	/** flag if the node is an alias */
+
 	private boolean alias;
-	/** flag if the node has an "rdf:value" child node. */
+
 	private boolean hasValueChild;
-	
-	
-	
-	/**
-	 * Creates an <code>XMPNode</code> with initial values.
-	 * 
-	 * @param name the name of the node
-	 * @param value the value of the node
-	 * @param options the options of the node
-	 */
-	public XMPNode(String name, String value, PropertyOptions options)
-	{
+
+	public XMPNode(String name, String value, PropertyOptions options) {
 		this.name = name;
 		this.value = value;
 		this.options = options;
 	}
 
-	
-	/**
-	 * Constructor for the node without value.
-	 * 
-	 * @param name the name of the node
-	 * @param options the options of the node
-	 */
-	public XMPNode(String name, PropertyOptions options)
-	{
-		this(name, null, options);
-	}
-	
+	public XMPNode(String name, PropertyOptions options) { this(name, null, options); }
 
-	/**
-	 * Resets the node.
-	 */
-	public void clear()
-	{
+	public void clear() {
 		options = null;
 		name = null;
 		value = null;
@@ -104,820 +62,266 @@ class XMPNode implements Comparable<XMPNode>
 		qualifier = null;
 	}
 
-	
-	/**
-	 * @return Returns the parent node.
-	 */
-	public XMPNode getParent()
-	{
-		return parent;
-	}
+	public XMPNode getParent() { return parent; }
 
-	
-	/**
-	 * @param index an index [1..size]
-	 * @return Returns the child with the requested index.
-	 */
-	public XMPNode getChild(int index)
-	{
-		return (XMPNode) getChildren().get(index - 1);
-	}
-	
-	
-	/**
-	 * Adds a node as child to this node.
-	 * @param node an XMPNode
-	 * @throws XMPException 
-	 */
-	public void addChild(XMPNode node) throws XMPException
-	{
-		// check for duplicate properties
+	public XMPNode getChild(int index) { return (XMPNode) getChildren().get(index - 1); }
+
+	public void addChild(XMPNode node) throws XMPException {
 		assertChildNotExisting(node.getName());
 		node.setParent(this);
 		getChildren().add(node);
 	}
 
-	
-	/**
-	 * Adds a node as child to this node.
-	 * @param index the index of the node <em>before</em> which the new one is inserted.
-	 * <em>Note:</em> The node children are indexed from [1..size]! 
-	 * An index of size + 1 appends a node.   
-	 * @param node an XMPNode
-	 * @throws XMPException 
-	 */
-	public void addChild(int index, XMPNode node) throws XMPException
-	{
+	public void addChild(int index, XMPNode node) throws XMPException {
 		assertChildNotExisting(node.getName());
 		node.setParent(this);
 		getChildren().add(index - 1, node);
 	}
 
-	
-	/**
-	 * Replaces a node with another one.
-	 * @param index the index of the node that will be replaced.
-	 * <em>Note:</em> The node children are indexed from [1..size]! 
-	 * @param node the replacement XMPNode
-	 */
-	public void replaceChild(int index, XMPNode node)
-	{
+	public void replaceChild(int index, XMPNode node) {
 		node.setParent(this);
 		getChildren().set(index - 1, node);
 	}
-	
-	
-	/**
-	 * Removes a child at the requested index.
-	 * @param itemIndex the index to remove [1..size] 
-	 */
-	public void removeChild(int itemIndex)
-	{
+
+	public void removeChild(int itemIndex) {
 		getChildren().remove(itemIndex - 1);
 		cleanupChildren();
 	}
-	
-	
-	/**
-	 * Removes a child node.
-	 * If its a schema node and doesn't have any children anymore, its deleted.
-	 * 
-	 * @param node the child node to delete.
-	 */
-	public void removeChild(XMPNode node)
-	{
+
+	public void removeChild(XMPNode node) {
 		getChildren().remove(node);
 		cleanupChildren();
 	}
 
+	protected void cleanupChildren() { if (children.isEmpty()) children = null; }
 
-	/**
-	 * Removes the children list if this node has no children anymore;
-	 * checks if the provided node is a schema node and doesn't have any children anymore, 
-	 * its deleted.
-	 */
-	protected void cleanupChildren()
-	{
-		if (children.isEmpty())
-		{
-			children = null;
-		}
-	}
+	public void removeChildren() { children = null; }
 
-	
-	/**
-	 * Removes all children from the node. 
-	 */ 
-	public void removeChildren()
-	{
-		children = null;
-	}
+	public int getChildrenLength() { return children != null ? children.size() : 0; }
 
-	
-	/**
-	 * @return Returns the number of children without neccessarily creating a list.
-	 */
-	public int getChildrenLength()
-	{
-		return children != null ?
-			children.size() :	
-			0;
-	}
+	public XMPNode findChildByName(String expr) { return find(getChildren(), expr); }
 
-	
-	/**
-	 * @param expr child node name to look for
-	 * @return Returns an <code>XMPNode</code> if node has been found, <code>null</code> otherwise. 
-	 */
-	public XMPNode findChildByName(String expr)
-	{
-		return find(getChildren(), expr);
-	}
+	public XMPNode getQualifier(int index) { return (XMPNode) getQualifier().get(index - 1); }
 
-	
-	/**
-	 * @param index an index [1..size]
-	 * @return Returns the qualifier with the requested index.
-	 */
-	public XMPNode getQualifier(int index)
-	{
-		return (XMPNode) getQualifier().get(index - 1);
-	}
-	
-	
-	/**
-	 * @return Returns the number of qualifier without neccessarily creating a list.
-	 */
-	public int getQualifierLength()
-	{
-		return qualifier != null ?
-			qualifier.size() :	
-			0;
-	}
-	
-	
-	/**
-	 * Appends a qualifier to the qualifier list and sets respective options.
-	 * @param qualNode a qualifier node.
-	 * @throws XMPException 
-	 */
-	public void addQualifier(XMPNode qualNode) throws XMPException
-	{
+	public int getQualifierLength() { return qualifier != null ? qualifier.size() : 0; }
+
+	public void addQualifier(XMPNode qualNode) throws XMPException {
 		assertQualifierNotExisting(qualNode.getName());
 		qualNode.setParent(this);
 		qualNode.getOptions().setQualifier(true);
 		getOptions().setHasQualifiers(true);
-		
-		// contraints
-		if (qualNode.isLanguageNode())
-		{
-			// "xml:lang" is always first and the option "hasLanguage" is set
+		if (qualNode.isLanguageNode()) {
 			options.setHasLanguage(true);
 			getQualifier().add(0, qualNode);
-		}
-		else if (qualNode.isTypeNode())
-		{
-			// "rdf:type" must be first or second after "xml:lang" and the option "hasType" is set
+		} else if (qualNode.isTypeNode()) {
 			options.setHasType(true);
-			getQualifier().add(
-				!options.getHasLanguage() ? 0 : 1,	
-				qualNode);
-		}
-		else
-		{
-			// other qualifiers are appended
-			getQualifier().add(qualNode);
-		}	
+			getQualifier().add(!options.getHasLanguage() ? 0 : 1, qualNode);
+		} else getQualifier().add(qualNode);
 	}
 
-	
-	/**
-	 * Removes one qualifier node and fixes the options.
-	 * @param qualNode qualifier to remove
-	 */
-	public void removeQualifier(XMPNode qualNode)
-	{
+	public void removeQualifier(XMPNode qualNode) {
 		PropertyOptions opts = getOptions();
-		if (qualNode.isLanguageNode())
-		{
-			// if "xml:lang" is removed, remove hasLanguage-flag too
-			opts.setHasLanguage(false);
-		}
-		else if (qualNode.isTypeNode())
-		{
-			// if "rdf:type" is removed, remove hasType-flag too
-			opts.setHasType(false);
-		}
-		
+		if (qualNode.isLanguageNode()) opts.setHasLanguage(false);
+		else if (qualNode.isTypeNode()) opts.setHasType(false);
 		getQualifier().remove(qualNode);
-		if (qualifier.isEmpty())
-		{
+		if (qualifier.isEmpty()) {
 			opts.setHasQualifiers(false);
 			qualifier = null;
 		}
-		
 	}
 
-	
-	/**
-	 * Removes all qualifiers from the node and sets the options appropriate. 
-	 */ 
-	public void removeQualifiers()
-	{
+	public void removeQualifiers() {
 		PropertyOptions opts = getOptions();
-		// clear qualifier related options
 		opts.setHasQualifiers(false);
 		opts.setHasLanguage(false);
 		opts.setHasType(false);
 		qualifier = null;
 	}
 
+	public XMPNode findQualifierByName(String expr) { return find(qualifier, expr); }
 
-	/**
-	 * @param expr qualifier node name to look for
-	 * @return Returns a qualifier <code>XMPNode</code> if node has been found, 
-	 * <code>null</code> otherwise. 
-	 */
-	public XMPNode findQualifierByName(String expr)
-	{
-		return find(qualifier, expr);
-	}
-	
+	public boolean hasChildren() { return children != null && children.size() > 0; }
 
-	/**
-	 * @return Returns whether the node has children.
-	 */
-	public boolean hasChildren()
-	{
-		return children != null  &&  children.size() > 0;
-	}	
-	
+	public Iterator<XMPNode> iterateChildren() {
+		if (children != null) return getChildren().iterator();
+		else return LIST_ITERATOR;
+	}
 
-	/**
-	 * @return Returns an iterator for the children.
-	 * <em>Note:</em> take care to use it.remove(), as the flag are not adjusted in that case.
-	 */
-	public Iterator<XMPNode> iterateChildren()
-	{
-		if (children != null)
-		{
-			return getChildren().iterator();
-		}
-		else
-		{
-			return LIST_ITERATOR;
-		}
-	}
-	
-	
-	/**
-	 * @return Returns whether the node has qualifier attached.
-	 */
-	public boolean hasQualifier()
-	{
-		return qualifier != null  &&  qualifier.size() > 0;
-	}
-	
-	
-	/**
-	 * @return Returns an iterator for the qualifier.
-	 * <em>Note:</em> take care to use it.remove(), as the flag are not adjusted in that case.
-	 */
-	public Iterator<XMPNode> iterateQualifier()
-	{
-		if (qualifier != null)
-		{
+	public boolean hasQualifier() { return qualifier != null && qualifier.size() > 0; }
+
+	public Iterator<XMPNode> iterateQualifier() {
+		if (qualifier == null) return LIST_ITERATOR;
+		else {
 			final Iterator<XMPNode> it = getQualifier().iterator();
-			
-			return new Iterator<XMPNode>()
-			{
-				public boolean hasNext()
-				{
-					return it.hasNext();
+			return new Iterator<XMPNode>() {
+				public boolean hasNext() { return it.hasNext(); }
+				public XMPNode next() { return it.next(); }
+				public void remove() {
+					throw new UnsupportedOperationException("remove() is not allowed due to the internal contraints");
 				}
-
-				public XMPNode next()
-				{
-					return it.next();
-				}
-
-				public void remove()
-				{
-					throw new UnsupportedOperationException(
-							"remove() is not allowed due to the internal contraints");
-				}
-				
 			};
 		}
-		else
-		{
-			return LIST_ITERATOR;
-		}
 	}
-	
-	
-	/**
-	 * Performs a <b>deep clone</b> of the node and the complete subtree.
-	 * 
-	 * @see java.lang.Object#clone()
-	 */
-	public Object clone()
-	{
+
+	public XMPNode clone() {
 		PropertyOptions newOptions;
-		try
-		{
-			newOptions = new PropertyOptions(getOptions().getOptions());
-		}
-		catch (XMPException e)
-		{
-			// cannot happen
-			newOptions = new PropertyOptions();
-		}
-		
+		try { newOptions = new PropertyOptions(getOptions().getOptions()); }
+		catch (XMPException e) { newOptions = new PropertyOptions(); }
 		XMPNode newNode = new XMPNode(name, value, newOptions);
 		cloneSubtree(newNode);
-		
 		return newNode;
 	}
-	
-	
-	/**
-	 * Performs a <b>deep clone</b> of the complete subtree (children and
-	 * qualifier )into and add it to the destination node.
-	 * 
-	 * @param destination the node to add the cloned subtree
-	 */
-	public void cloneSubtree(XMPNode destination)
-	{
-		try
-		{
-			for (Iterator<XMPNode> it = iterateChildren(); it.hasNext();)
-			{
-				XMPNode child = (XMPNode) it.next();
-				destination.addChild((XMPNode) child.clone());
-			}
-			
-			for (Iterator<XMPNode> it = iterateQualifier(); it.hasNext();)
-			{
-				XMPNode qualifier = (XMPNode) it.next();
-				destination.addQualifier((XMPNode) qualifier.clone());
-			}
-		}
-		catch (XMPException e)
-		{
-			// cannot happen (duplicate childs/quals do not exist in this node)
-			assert false;
-		}
-		
-	}	
-	
-	
-	/** 
-	 * Renders this node and the tree unter this node in a human readable form.
-	 * @param recursive Flag is qualifier and child nodes shall be rendered too
-	 * @return Returns a multiline string containing the dump.
-	 */
-	public String dumpNode(boolean recursive)
-	{
+
+	public void cloneSubtree(XMPNode destination) {
+		try {
+			for (Iterator<XMPNode> it = iterateChildren(); it.hasNext();) destination.addChild(it.next().clone());
+			for (Iterator<XMPNode> it = iterateQualifier(); it.hasNext();) destination.addQualifier((XMPNode) it.next().clone());
+		} catch (XMPException e) { assert false; }
+
+	}
+
+	public String dumpNode(boolean recursive) {
 		StringBuffer result = new StringBuffer(512);
 		this.dumpNode(result, recursive, 0, 0);
 		return result.toString();
 	}
-	
-	
-	/**
-	 * @see Comparable#compareTo(Object) 
-	 */
-	public int compareTo(XMPNode xmpNode)
-	{
-		if (getOptions().isSchemaNode())
-		{
-			return this.value.compareTo(((XMPNode) xmpNode).getValue());
-		}
-		else
-		{
-			return this.name.compareTo(((XMPNode) xmpNode).getName());
-		}	
-	}
-	
-	
-	/**
-	 * @return Returns the name.
-	 */
-	public String getName()
-	{
-		return name;
+
+	public int compareTo(XMPNode xmpNode) {
+		if (getOptions().isSchemaNode()) return this.value.compareTo(((XMPNode) xmpNode).getValue());
+		else return this.name.compareTo(((XMPNode) xmpNode).getName());
 	}
 
+	public String getName() { return name; }
 
-	/**
-	 * @param name The name to set.
-	 */
-	public void setName(String name)
-	{
-		this.name = name;
-	}
+	public void setName(String name) { this.name = name; }
 
+	public String getValue() { return value; }
 
-	/**
-	 * @return Returns the value.
-	 */
-	public String getValue()
-	{
-		return value;
-	}
+	public void setValue(String value) { this.value = value; }
 
-
-	/**
-	 * @param value The value to set.
-	 */
-	public void setValue(String value)
-	{
-		this.value = value;
-	}	
-
-	
-	/**
-	 * @return Returns the options.
-	 */
-	public PropertyOptions getOptions()
-	{
-		if (options == null)
-		{
-			options = new PropertyOptions();
-		}
+	public PropertyOptions getOptions() {
+		if (options == null) options = new PropertyOptions();
 		return options;
 	}
 
-	
-	/**
-	 * Updates the options of the node.
-	 * @param options the options to set.
-	 */
-	public void setOptions(PropertyOptions options)
-	{
-		this.options = options;
-	}
+	public void setOptions(PropertyOptions options) { this.options = options; }
 
-	
-	/**
-	 * @return Returns the implicit flag
-	 */
-	public boolean isImplicit()
-	{
-		return implicit;
-	}
+	public boolean isImplicit() { return implicit; }
 
+	public void setImplicit(boolean implicit) { this.implicit = implicit; }
 
-	/**
-	 * @param implicit Sets the implicit node flag
-	 */
-	public void setImplicit(boolean implicit)
-	{
-		this.implicit = implicit;
-	}
-	
-	
-	/**
-	 * @return Returns if the node contains aliases (applies only to schema nodes)
-	 */
-	public boolean getHasAliases()
-	{
-		return hasAliases;
-	}
+	public boolean getHasAliases() { return hasAliases; }
 
+	public void setHasAliases(boolean hasAliases) { this.hasAliases = hasAliases; }
 
-	/**
-	 * @param hasAliases sets the flag that the node contains aliases
-	 */
-	public void setHasAliases(boolean hasAliases)
-	{
-		this.hasAliases = hasAliases;
-	}	
-	
-	
-	/**
-	 * @return Returns if the node contains aliases (applies only to schema nodes)
-	 */
-	public boolean isAlias()
-	{
-		return alias;
-	}
+	public boolean isAlias() { return alias; }
 
+	public void setAlias(boolean alias) { this.alias = alias; }
 
-	/**
-	 * @param alias sets the flag that the node is an alias
-	 */
-	public void setAlias(boolean alias)
-	{
-		this.alias = alias;
-	}	
-	
-	
-	/**
-	 * @return the hasValueChild
-	 */
-	public boolean getHasValueChild()
-	{
-		return hasValueChild;
-	}
+	public boolean getHasValueChild() { return hasValueChild; }
 
+	public void setHasValueChild(boolean hasValueChild) { this.hasValueChild = hasValueChild; }
 
-	/**
-	 * @param hasValueChild the hasValueChild to set
-	 */
-	public void setHasValueChild(boolean hasValueChild)
-	{
-		this.hasValueChild = hasValueChild;
-	}
-	
-	
-	
-	/**
-	 * Sorts the complete datamodel according to the following rules:
-	 * <ul>
-	 * 		<li>Nodes at one level are sorted by name, that is prefix + local name
-	 * 		<li>Starting at the root node the children and qualifier are sorted recursively, 
-	 * 			which the following exceptions.
-	 * 		<li>Sorting will not be used for arrays.
-	 * 		<li>Within qualifier "xml:lang" and/or "rdf:type" stay at the top in that order, 
-	 * 			all others are sorted.  
-	 * </ul>
-	 */
-	public void sort()
-	{
-		// sort qualifier
-		if (hasQualifier())
-		{
-			XMPNode[] quals = (XMPNode[]) getQualifier()
-				.toArray(new XMPNode[getQualifierLength()]);
+	public void sort() {
+		if (hasQualifier()) {
+			XMPNode[] quals = (XMPNode[]) getQualifier().toArray(new XMPNode[getQualifierLength()]);
 			int sortFrom = 0;
 			while (
-					quals.length > sortFrom  &&
-					(XMPConst.XML_LANG.equals(quals[sortFrom].getName())  ||
-					 "rdf:type".equals(quals[sortFrom].getName()))
-				  )		 
-			{
-				quals[sortFrom].sort();
-				sortFrom++;
-			}
-
+				quals.length > sortFrom && (
+					XMPConst.XML_LANG.equals(quals[sortFrom].getName()) ||
+					"rdf:type".equals(quals[sortFrom].getName())
+				)
+			) quals[sortFrom++].sort();
 			Arrays.sort(quals, sortFrom, quals.length);
 			ListIterator<XMPNode> it = qualifier.listIterator();
-			for (int j = 0; j < quals.length; j++)
-			{
+			for (int j = 0; j < quals.length; j++) {
 				it.next();
 				it.set(quals[j]);
 				quals[j].sort();
 			}
 		}
-		
-		// sort children
-		if (hasChildren())
-		{	
-			if (!getOptions().isArray())
-			{
-				Collections.sort(children);
-			}
-			for (Iterator<XMPNode> it = iterateChildren(); it.hasNext();)
-			{
-				it.next().sort();
-				
-			}
+		if (hasChildren()) {
+			if (!getOptions().isArray()) Collections.sort(children);
+			for (Iterator<XMPNode> it = iterateChildren(); it.hasNext();) it.next().sort();
 		}
-	}	
-	
-	
-	
-	//------------------------------------------------------------------------------ private methods
+	}
 
-	
-	/**
-	 * Dumps this node and its qualifier and children recursively.
-	 * <em>Note:</em> It creats empty options on every node.
-	 *  
-	 * @param result the buffer to append the dump.
-	 * @param recursive Flag is qualifier and child nodes shall be rendered too
-	 * @param indent the current indent level.
-	 * @param index the index within the parent node (important for arrays) 
-	 */
-	private void dumpNode(StringBuffer result, boolean recursive, int indent, int index)
-	{
-		// write indent
-		for (int i = 0; i < indent; i++)
-		{
-			result.append('\t');
-		}
-		
-		// render Node
+	private void dumpNode(StringBuffer result, boolean recursive, int indent, int index) {
+		for (int i = 0; i < indent; i++) result.append('\t');
 		if (parent != null)
-		{
-			if (getOptions().isQualifier())
-			{
+			if (getOptions().isQualifier()) {
 				result.append('?');
 				result.append(name);
-			}
-			else if (getParent().getOptions().isArray())
-			{
+			} else if (getParent().getOptions().isArray()) {
 				result.append('[');
 				result.append(index);
 				result.append(']');
-			}
-			else
-			{
-				result.append(name);
-			}
-		}
-		else
-		{
-			// applies only to the root node
+			} else result.append(name);
+		else {
 			result.append("ROOT NODE");
-			if (name != null  &&  name.length() > 0)
-			{
-				// the "about" attribute
+			if (name != null && name.length() > 0) {
 				result.append(" (");
 				result.append(name);
 				result.append(')');
-			}	
+			}
 		}
-		
-		if (value != null  &&  value.length() > 0)
-		{
+		if (value != null && value.length() > 0) {
 			result.append(" = \"");
 			result.append(value);
 			result.append('"');
 		}
-		
-		// render options if at least one is set
-		if (getOptions().containsOneOf(0xffffffff))
-		{
+		if (getOptions().containsOneOf(0xffffffff)) {
 			result.append("\t(");
 			result.append(getOptions().toString());
 			result.append(" : ");
 			result.append(getOptions().getOptionsString());
 			result.append(')');
 		}
-		
 		result.append('\n');
-		
-		// render qualifier
-		if (recursive  &&  hasQualifier())
-		{
-			XMPNode[] quals = (XMPNode[]) getQualifier()
-				.toArray(new XMPNode[getQualifierLength()]);
+		if (recursive && hasQualifier()) {
+			XMPNode[] quals = (XMPNode[]) getQualifier().toArray(new XMPNode[getQualifierLength()]);
 			int i = 0;
-			while (quals.length > i  &&
-					(XMPConst.XML_LANG.equals(quals[i].getName())  ||
-					 "rdf:type".equals(quals[i].getName()))
-				  )		 
-			{
-				i++;
-			}
+			while (quals.length > i && (XMPConst.XML_LANG.equals(quals[i].getName()) || "rdf:type".equals(quals[i].getName()))) i++;
 			Arrays.sort(quals, i, quals.length);
-			for (i = 0; i < quals.length; i++)
-			{
-				XMPNode qualifier = quals[i];
-				qualifier.dumpNode(result, recursive, indent + 2, i + 1);
-			}
+			for (i = 0; i < quals.length; i++) quals[i].dumpNode(result, recursive, indent + 2, i + 1);
 		}
-		
-		// render children
-		if (recursive  &&  hasChildren())
-		{	
-			XMPNode[] children = (XMPNode[]) getChildren()
-				.toArray(new XMPNode[getChildrenLength()]);
-			if (!getOptions().isArray())
-			{	
-				Arrays.sort(children);
-			}
-			for (int i = 0; i < children.length; i++)
-			{
-				XMPNode child = children[i];
-				child.dumpNode(result, recursive, indent + 1, i + 1);
-			}
+		if (recursive && hasChildren()) {
+			XMPNode[] children = (XMPNode[]) getChildren().toArray(new XMPNode[getChildrenLength()]);
+			if (!getOptions().isArray()) Arrays.sort(children);
+			for (int i = 0; i < children.length; i++) children[i].dumpNode(result, recursive, indent + 1, i + 1);
 		}
 	}
-	
-	
-	/**
-	 * @return Returns whether this node is a language qualifier. 
-	 */
-	private boolean isLanguageNode()
-	{
-		return XMPConst.XML_LANG.equals(name);
-	}
 
-	
-	/**
-	 * @return Returns whether this node is a type qualifier. 
-	 */
-	private boolean isTypeNode()
-	{
-		return "rdf:type".equals(name);
-	}
-	
+	private boolean isLanguageNode() { return XMPConst.XML_LANG.equals(name); }
 
-	/**
-	 * <em>Note:</em> This method should always be called when accessing 'children' to be sure
-	 * that its initialized.
-	 * @return Returns list of children that is lazy initialized.
-	 */
-	private List<XMPNode> getChildren()
-	{
-		if (children == null)
-		{
-			children = new ArrayList<XMPNode>(0);
-		}
-		return children;
-	}
+	private boolean isTypeNode() { return "rdf:type".equals(name); }
 
-	
-	/**
-	 * @return Returns a read-only copy of child nodes list.
-	 */
-	public List<XMPNode> getUnmodifiableChildren()
-	{
-		return Collections.unmodifiableList(new ArrayList<XMPNode>(getChildren()));
-	}
-	
-	
-	/**
-	 * @return Returns list of qualifier that is lazy initialized.
-	 */
-	private List<XMPNode> getQualifier()
-	{
-		if (qualifier == null)
-		{
-			qualifier = new ArrayList<XMPNode>(0);
-		}
-		return qualifier;
-	}
-	
-	
-	/**
-	 * Sets the parent node, this is solely done by <code>addChild(...)</code>
-	 * and <code>addQualifier()</code>.
-	 * 
-	 * @param parent
-	 *            Sets the parent node.
-	 */
-	protected void setParent(XMPNode parent)
-	{
-		this.parent = parent;
-	}
+	private List<XMPNode> getChildren() { return children == null? children = new ArrayList<XMPNode>(0) : children; }
 
-	
-	/**
-	 * Internal find.
-	 * @param list the list to search in
-	 * @param expr the search expression
-	 * @return Returns the found node or <code>nulls</code>.
-	 */
-	private XMPNode find(List<XMPNode> list, String expr)
-	{
-		
-		if (list != null)
-		{	
-			for (Iterator<XMPNode> it = list.iterator(); it.hasNext();)
-			{
-				XMPNode child = (XMPNode) it.next();
-				if (child.getName().equals(expr))
-				{
-					return child;
-				}
+	public List<XMPNode> getUnmodifiableChildren() { return Collections.unmodifiableList(new ArrayList<XMPNode>(getChildren())); }
+
+	private List<XMPNode> getQualifier() { return qualifier == null? qualifier = new ArrayList<XMPNode>(0) : qualifier; }
+
+	protected void setParent(XMPNode parent) { this.parent = parent; }
+
+	private XMPNode find(List<XMPNode> list, String expr) {
+		if (list != null) {
+			for (Iterator<XMPNode> it = list.iterator(); it.hasNext();) {
+				XMPNode child = it.next();
+				if (child.getName().equals(expr)) return child;
 			}
-		}	
+		}
 		return null;
 	}
-	
-	
-	/**
-	 * Checks that a node name is not existing on the same level, except for array items.
-	 * @param childName the node name to check
-	 * @throws XMPException Thrown if a node with the same name is existing.
-	 */
-	private void assertChildNotExisting(String childName) throws XMPException
-	{
-		if (!XMPConst.ARRAY_ITEM_NAME.equals(childName)  &&
-			findChildByName(childName) != null)
-		{
-			throw new XMPException("Duplicate property or field node '" + childName + "'",
-					XMPError.BADXMP);
-		}
+
+	private void assertChildNotExisting(String childName) throws XMPException {
+		if (!XMPConst.ARRAY_ITEM_NAME.equals(childName) && findChildByName(childName) != null)
+			throw new XMPException("Duplicate property or field node '" + childName + "'", XMPError.BADXMP);
 	}
-	
-	
-	/**
-	 * Checks that a qualifier name is not existing on the same level.
-	 * @param qualifierName the new qualifier name
-	 * @throws XMPException Thrown if a node with the same name is existing.
-	 */
-	private void assertQualifierNotExisting(String qualifierName) throws XMPException
-	{
-		if (!XMPConst.ARRAY_ITEM_NAME.equals(qualifierName)  &&
-			findQualifierByName(qualifierName) != null)
-		{
+
+	private void assertQualifierNotExisting(String qualifierName) throws XMPException {
+		if (!XMPConst.ARRAY_ITEM_NAME.equals(qualifierName) && findQualifierByName(qualifierName) != null)
 			throw new XMPException("Duplicate '" + qualifierName + "' qualifier", XMPError.BADXMP);
-		}
 	}
+
 }

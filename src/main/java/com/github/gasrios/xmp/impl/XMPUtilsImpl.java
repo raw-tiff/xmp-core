@@ -7,8 +7,6 @@
 // of the Adobe license agreement accompanying it.
 // =================================================================================================
 
-
-
 package com.github.gasrios.xmp.impl;
 
 import java.util.Iterator;
@@ -24,156 +22,56 @@ import com.github.gasrios.xmp.impl.xpath.XMPPathParser;
 import com.github.gasrios.xmp.options.PropertyOptions;
 import com.github.gasrios.xmp.properties.XMPAliasInfo;
 
-
-
-/**
- * @since 11.08.2006
- */
-public class XMPUtilsImpl implements XMPConst
-{
-	/** */
+public class XMPUtilsImpl implements XMPConst {
 	private static final int UCK_NORMAL = 0;
-	/** */
 	private static final int UCK_SPACE = 1;
-	/** */
 	private static final int UCK_COMMA = 2;
-	/** */
 	private static final int UCK_SEMICOLON = 3;
-	/** */
 	private static final int UCK_QUOTE = 4;
-	/** */
 	private static final int UCK_CONTROL = 5;
 
-
-	/**
-	 * Private constructor, as
-	 */
-	private XMPUtilsImpl()
-	{
-		// EMPTY
+	private XMPUtilsImpl() {
 	}
 
-
-	/**
-	 * @see XMPUtils#catenateArrayItems(XMPMeta, String, String, String, String,
-	 *      boolean)
-	 * 
-	 * @param xmp
-	 *            The XMP object containing the array to be catenated.
-	 * @param schemaNS
-	 *            The schema namespace URI for the array. Must not be null or
-	 *            the empty string.
-	 * @param arrayName
-	 *            The name of the array. May be a general path expression, must
-	 *            not be null or the empty string. Each item in the array must
-	 *            be a simple string value.
-	 * @param separator
-	 *            The string to be used to separate the items in the catenated
-	 *            string. Defaults to &quot;; &quot;, ASCII semicolon and space
-	 *            (U+003B, U+0020).
-	 * @param quotes
-	 *            The characters to be used as quotes around array items that
-	 *            contain a separator. Defaults to &apos;&quot;&apos;
-	 * @param allowCommas
-	 *            Option flag to control the catenation.
-	 * @return Returns the string containing the catenated array items.
-	 * @throws XMPException
-	 *             Forwards the Exceptions from the metadata processing
-	 */
-	public static String catenateArrayItems(XMPMeta xmp, String schemaNS, String arrayName,
-			String separator, String quotes, boolean allowCommas) throws XMPException
-	{
+	public static String catenateArrayItems(XMPMeta xmp, String schemaNS, String arrayName, String separator,
+			String quotes, boolean allowCommas) throws XMPException {
 		ParameterAsserts.assertSchemaNS(schemaNS);
 		ParameterAsserts.assertArrayName(arrayName);
 		ParameterAsserts.assertImplementation(xmp);
-		if (separator == null  ||  separator.length() == 0)
-		{
-			separator = "; ";	
-		}
-		if (quotes == null  ||  quotes.length() == 0)
-		{	
+		if (separator == null || separator.length() == 0)
+			separator = "; ";
+		if (quotes == null || quotes.length() == 0)
 			quotes = "\"";
-		}
-		
 		XMPMetaImpl xmpImpl = (XMPMetaImpl) xmp;
 		XMPNode arrayNode = null;
 		XMPNode currItem = null;
-
-		// Return an empty result if the array does not exist, 
-		// hurl if it isn't the right form.
 		XMPPath arrayPath = XMPPathParser.expandXPath(schemaNS, arrayName);
 		arrayNode = XMPNodeUtils.findNode(xmpImpl.getRoot(), arrayPath, false, null);
 		if (arrayNode == null)
-		{
 			return "";
-		}
 		else if (!arrayNode.getOptions().isArray() || arrayNode.getOptions().isArrayAlternate())
-		{
 			throw new XMPException("Named property must be non-alternate array", XMPError.BADPARAM);
-		}
-
-		// Make sure the separator is OK.
 		checkSeparator(separator);
-		// Make sure the open and close quotes are a legitimate pair.
 		char openQuote = quotes.charAt(0);
 		char closeQuote = checkQuotes(quotes, openQuote);
-
-		// Build the result, quoting the array items, adding separators.
-		// Hurl if any item isn't simple.
-
 		StringBuffer catinatedString = new StringBuffer();
-
-		for (Iterator<XMPNode> it = arrayNode.iterateChildren(); it.hasNext();)
-		{
+		for (Iterator<XMPNode> it = arrayNode.iterateChildren(); it.hasNext();) {
 			currItem = it.next();
 			if (currItem.getOptions().isCompositeProperty())
-			{
 				throw new XMPException("Array items must be simple", XMPError.BADPARAM);
-			}
 			String str = applyQuotes(currItem.getValue(), openQuote, closeQuote, allowCommas);
-
 			catinatedString.append(str);
 			if (it.hasNext())
-			{
 				catinatedString.append(separator);
-			}
 		}
-
 		return catinatedString.toString();
 	}
 
-
-	/**
-	 * see {@link XMPUtils#separateArrayItems(XMPMeta, String, String, String, 
-	 * PropertyOptions, boolean)}
-	 * 
-	 * @param xmp
-	 *            The XMP object containing the array to be updated.
-	 * @param schemaNS
-	 *            The schema namespace URI for the array. Must not be null or
-	 *            the empty string.
-	 * @param arrayName
-	 *            The name of the array. May be a general path expression, must
-	 *            not be null or the empty string. Each item in the array must
-	 *            be a simple string value.
-	 * @param catedStr
-	 *            The string to be separated into the array items.
-	 * @param arrayOptions
-	 *            Option flags to control the separation.
-	 * @param preserveCommas
-	 *            Flag if commas shall be preserved
-	 * 
-	 * @throws XMPException
-	 *             Forwards the Exceptions from the metadata processing
-	 */
-	public static void separateArrayItems(XMPMeta xmp, String schemaNS, String arrayName,
-			String catedStr, PropertyOptions arrayOptions, boolean preserveCommas)
-			throws XMPException
-	{
+	public static void separateArrayItems(XMPMeta xmp, String schemaNS, String arrayName, String catedStr,
+			PropertyOptions arrayOptions, boolean preserveCommas) throws XMPException {
 		ParameterAsserts.assertSchemaNS(schemaNS);
 		ParameterAsserts.assertArrayName(arrayName);
-		if (catedStr == null)
-		{
+		if (catedStr == null) {
 			throw new XMPException("Parameter must not be null", XMPError.BADPARAM);
 		}
 		ParameterAsserts.assertImplementation(xmp);
@@ -187,64 +85,49 @@ public class XMPUtilsImpl implements XMPConst
 		int itemStart, itemEnd;
 		int nextKind = UCK_NORMAL, charKind = UCK_NORMAL;
 		char ch = 0, nextChar = 0;
-		
+
 		itemEnd = 0;
 		int endPos = catedStr.length();
-		while (itemEnd < endPos)
-		{
+		while (itemEnd < endPos) {
 			// Skip any leading spaces and separation characters. Always skip commas here.
 			// They can be kept when within a value, but not when alone between values.
-			for (itemStart = itemEnd; itemStart < endPos; itemStart++)
-			{
+			for (itemStart = itemEnd; itemStart < endPos; itemStart++) {
 				ch = catedStr.charAt(itemStart);
 				charKind = classifyCharacter(ch);
-				if (charKind == UCK_NORMAL || charKind == UCK_QUOTE)
-				{
+				if (charKind == UCK_NORMAL || charKind == UCK_QUOTE) {
 					break;
 				}
 			}
-			if (itemStart >= endPos)
-			{
+			if (itemStart >= endPos) {
 				break;
 			}
 
-			if (charKind != UCK_QUOTE)
-			{
+			if (charKind != UCK_QUOTE) {
 				// This is not a quoted value. Scan for the end, create an array
 				// item from the substring.
-				for (itemEnd = itemStart; itemEnd < endPos; itemEnd++)
-				{
+				for (itemEnd = itemStart; itemEnd < endPos; itemEnd++) {
 					ch = catedStr.charAt(itemEnd);
 					charKind = classifyCharacter(ch);
 
-					if (charKind == UCK_NORMAL || charKind == UCK_QUOTE  ||
-						(charKind == UCK_COMMA && preserveCommas))
-					{
+					if (charKind == UCK_NORMAL || charKind == UCK_QUOTE || (charKind == UCK_COMMA && preserveCommas)) {
 						continue;
-					}
-					else if (charKind != UCK_SPACE)
-					{
+					} else if (charKind != UCK_SPACE) {
 						break;
-					}
-					else if ((itemEnd + 1) < endPos)
-					{
+					} else if ((itemEnd + 1) < endPos) {
 						ch = catedStr.charAt(itemEnd + 1);
 						nextKind = classifyCharacter(ch);
-						if (nextKind == UCK_NORMAL  ||  nextKind == UCK_QUOTE  ||
-							(nextKind == UCK_COMMA && preserveCommas))
-						{
+						if (nextKind == UCK_NORMAL || nextKind == UCK_QUOTE
+								|| (nextKind == UCK_COMMA && preserveCommas)) {
 							continue;
 						}
 					}
-					
+
 					// Anything left?
 					break; // Have multiple spaces, or a space followed by a
 							// separator.
 				}
 				itemValue = catedStr.substring(itemStart, itemEnd);
-			}
-			else
-			{
+			} else {
 				// Accumulate quoted values into a local string, undoubling
 				// internal quotes that
 				// match the surrounding quotes. Do not undouble "unmatching"
@@ -256,50 +139,38 @@ public class XMPUtilsImpl implements XMPConst
 				itemStart++; // Skip the opening quote;
 				itemValue = "";
 
-				for (itemEnd = itemStart; itemEnd < endPos; itemEnd++)
-				{
+				for (itemEnd = itemStart; itemEnd < endPos; itemEnd++) {
 					ch = catedStr.charAt(itemEnd);
 					charKind = classifyCharacter(ch);
 
-					if (charKind != UCK_QUOTE || !isSurroundingQuote(ch, openQuote, closeQuote))
-					{
+					if (charKind != UCK_QUOTE || !isSurroundingQuote(ch, openQuote, closeQuote)) {
 						// This is not a matching quote, just append it to the
 						// item value.
 						itemValue += ch;
-					}
-					else
-					{
+					} else {
 						// This is a "matching" quote. Is it doubled, or the
 						// final closing quote?
 						// Tolerate various edge cases like undoubled opening
 						// (non-closing) quotes,
 						// or end of input.
 
-						if ((itemEnd + 1) < endPos)
-						{
+						if ((itemEnd + 1) < endPos) {
 							nextChar = catedStr.charAt(itemEnd + 1);
 							nextKind = classifyCharacter(nextChar);
-						}
-						else
-						{
+						} else {
 							nextKind = UCK_SEMICOLON;
 							nextChar = 0x3B;
 						}
 
-						if (ch == nextChar)
-						{
+						if (ch == nextChar) {
 							// This is doubled, copy it and skip the double.
 							itemValue += ch;
 							// Loop will add in charSize.
 							itemEnd++;
-						}
-						else if (!isClosingingQuote(ch, openQuote, closeQuote))
-						{
+						} else if (!isClosingingQuote(ch, openQuote, closeQuote)) {
 							// This is an undoubled, non-closing quote, copy it.
 							itemValue += ch;
-						}
-						else
-						{
+						} else {
 							// This is an undoubled closing quote, skip it and
 							// exit the loop.
 							itemEnd++;
@@ -309,43 +180,44 @@ public class XMPUtilsImpl implements XMPConst
 				}
 			}
 
-			// Add the separated item to the array. 
+			// Add the separated item to the array.
 			// Keep a matching old value in case it had separators.
 			int foundIndex = -1;
-			for (int oldChild = 1; oldChild <= arrayNode.getChildrenLength(); oldChild++)
-			{
-				if (itemValue.equals(arrayNode.getChild(oldChild).getValue()))
-				{
+			for (int oldChild = 1; oldChild <= arrayNode.getChildrenLength(); oldChild++) {
+				if (itemValue.equals(arrayNode.getChild(oldChild).getValue())) {
 					foundIndex = oldChild;
 					break;
 				}
 			}
 
 			XMPNode newItem = null;
-			if (foundIndex < 0)
-			{
+			if (foundIndex < 0) {
 				newItem = new XMPNode(ARRAY_ITEM_NAME, itemValue, null);
 				arrayNode.addChild(newItem);
-			}			
+			}
 		}
 	}
 
-	
 	/**
-	 * Utility to find or create the array used by <code>separateArrayItems()</code>.
-	 * @param schemaNS a the namespace fo the array
-	 * @param arrayName the name of the array 
-	 * @param arrayOptions the options for the array if newly created
-	 * @param xmp the xmp object
+	 * Utility to find or create the array used by
+	 * <code>separateArrayItems()</code>.
+	 * 
+	 * @param schemaNS
+	 *            a the namespace fo the array
+	 * @param arrayName
+	 *            the name of the array
+	 * @param arrayOptions
+	 *            the options for the array if newly created
+	 * @param xmp
+	 *            the xmp object
 	 * @return Returns the array node.
-	 * @throws XMPException Forwards exceptions
+	 * @throws XMPException
+	 *             Forwards exceptions
 	 */
-	private static XMPNode separateFindCreateArray(String schemaNS, String arrayName,
-			PropertyOptions arrayOptions, XMPMetaImpl xmp) throws XMPException
-	{
+	private static XMPNode separateFindCreateArray(String schemaNS, String arrayName, PropertyOptions arrayOptions,
+			XMPMetaImpl xmp) throws XMPException {
 		arrayOptions = XMPNodeUtils.verifySetOptions(arrayOptions, null);
-		if (!arrayOptions.isOnlyArrayOptions())
-		{
+		if (!arrayOptions.isOnlyArrayOptions()) {
 			throw new XMPException("Options can only provide array form", XMPError.BADOPTIONS);
 		}
 
@@ -353,36 +225,27 @@ public class XMPUtilsImpl implements XMPConst
 		// aside, to be readded later if kept.
 		XMPPath arrayPath = XMPPathParser.expandXPath(schemaNS, arrayName);
 		XMPNode arrayNode = XMPNodeUtils.findNode(xmp.getRoot(), arrayPath, false, null);
-		if (arrayNode != null)
-		{
+		if (arrayNode != null) {
 			// The array exists, make sure the form is compatible. Zero
 			// arrayForm means take what exists.
 			PropertyOptions arrayForm = arrayNode.getOptions();
-			if (!arrayForm.isArray() || arrayForm.isArrayAlternate())
-			{
-				throw new XMPException("Named property must be non-alternate array", 
-					XMPError.BADXPATH);
+			if (!arrayForm.isArray() || arrayForm.isArrayAlternate()) {
+				throw new XMPException("Named property must be non-alternate array", XMPError.BADXPATH);
 			}
-			if (arrayOptions.equalArrayTypes(arrayForm))
-			{
-				throw new XMPException("Mismatch of specified and existing array form",
-						XMPError.BADXPATH); // *** Right error?
+			if (arrayOptions.equalArrayTypes(arrayForm)) {
+				throw new XMPException("Mismatch of specified and existing array form", XMPError.BADXPATH); // *** Right
+																											// error?
 			}
-		}
-		else
-		{
+		} else {
 			// The array does not exist, try to create it.
 			// don't modify the options handed into the method
-			arrayNode = XMPNodeUtils.findNode(xmp.getRoot(), arrayPath, true, arrayOptions
-					.setArray(true));
-			if (arrayNode == null)
-			{
+			arrayNode = XMPNodeUtils.findNode(xmp.getRoot(), arrayPath, true, arrayOptions.setArray(true));
+			if (arrayNode == null) {
 				throw new XMPException("Failed to create named array", XMPError.BADXPATH);
 			}
 		}
 		return arrayNode;
 	}
-
 
 	/**
 	 * @see XMPUtils#removeProperties(XMPMeta, String, String, boolean, boolean)
@@ -391,8 +254,7 @@ public class XMPUtilsImpl implements XMPConst
 	 *            The XMP object containing the properties to be removed.
 	 * 
 	 * @param schemaNS
-	 *            Optional schema namespace URI for the properties to be
-	 *            removed.
+	 *            Optional schema namespace URI for the properties to be removed.
 	 * 
 	 * @param propName
 	 *            Optional path expression for the property to be removed.
@@ -401,50 +263,41 @@ public class XMPUtilsImpl implements XMPConst
 	 *            Option flag to control the deletion: do internal properties in
 	 *            addition to external properties.
 	 * @param includeAliases
-	 *            Option flag to control the deletion: Include aliases in the
-	 *            "named schema" case above.
-	 * @throws XMPException If metadata processing fails
+	 *            Option flag to control the deletion: Include aliases in the "named
+	 *            schema" case above.
+	 * @throws XMPException
+	 *             If metadata processing fails
 	 */
-	public static void removeProperties(XMPMeta xmp, String schemaNS, String propName,
-			boolean doAllProperties, boolean includeAliases) throws XMPException
-	{
+	public static void removeProperties(XMPMeta xmp, String schemaNS, String propName, boolean doAllProperties,
+			boolean includeAliases) throws XMPException {
 		ParameterAsserts.assertImplementation(xmp);
 		XMPMetaImpl xmpImpl = (XMPMetaImpl) xmp;
 
-		if (propName != null && propName.length() > 0)
-		{
+		if (propName != null && propName.length() > 0) {
 			// Remove just the one indicated property. This might be an alias,
 			// the named schema might not actually exist. So don't lookup the
 			// schema node.
 
-			if (schemaNS == null || schemaNS.length() == 0)
-			{
-				throw new XMPException("Property name requires schema namespace", 
-					XMPError.BADPARAM);
+			if (schemaNS == null || schemaNS.length() == 0) {
+				throw new XMPException("Property name requires schema namespace", XMPError.BADPARAM);
 			}
 
 			XMPPath expPath = XMPPathParser.expandXPath(schemaNS, propName);
 
 			XMPNode propNode = XMPNodeUtils.findNode(xmpImpl.getRoot(), expPath, false, null);
-			if (propNode != null)
-			{
-				if (doAllProperties
-						|| !Utils.isInternalProperty(expPath.getSegment(XMPPath.STEP_SCHEMA)
-								.getName(), expPath.getSegment(XMPPath.STEP_ROOT_PROP).getName()))
-				{
+			if (propNode != null) {
+				if (doAllProperties || !Utils.isInternalProperty(expPath.getSegment(XMPPath.STEP_SCHEMA).getName(),
+						expPath.getSegment(XMPPath.STEP_ROOT_PROP).getName())) {
 					XMPNode parent = propNode.getParent();
 					parent.removeChild(propNode);
-					if (parent.getOptions().isSchemaNode()  &&  !parent.hasChildren())
-					{
+					if (parent.getOptions().isSchemaNode() && !parent.hasChildren()) {
 						// remove empty schema node
 						parent.getParent().removeChild(parent);
 					}
-						
+
 				}
 			}
-		}
-		else if (schemaNS != null && schemaNS.length() > 0)
-		{
+		} else if (schemaNS != null && schemaNS.length() > 0) {
 
 			// Remove all properties from the named schema. Optionally include
 			// aliases, in which case
@@ -452,16 +305,13 @@ public class XMPUtilsImpl implements XMPConst
 
 			// XMP_NodePtrPos schemaPos;
 			XMPNode schemaNode = XMPNodeUtils.findSchemaNode(xmpImpl.getRoot(), schemaNS, false);
-			if (schemaNode != null)
-			{
-				if (removeSchemaChildren(schemaNode, doAllProperties))
-				{
+			if (schemaNode != null) {
+				if (removeSchemaChildren(schemaNode, doAllProperties)) {
 					xmpImpl.getRoot().removeChild(schemaNode);
 				}
 			}
 
-			if (includeAliases)
-			{
+			if (includeAliases) {
 				// We're removing the aliases also. Look them up by their
 				// namespace prefix.
 				// But that takes more code and the extra speed isn't worth it.
@@ -469,99 +319,85 @@ public class XMPUtilsImpl implements XMPConst
 				// from the alias, to make sure the actual exists.
 
 				XMPAliasInfo[] aliases = XMPMetaFactory.getSchemaRegistry().findAliases(schemaNS);
-				for (int i = 0; i < aliases.length; i++)
-				{
+				for (int i = 0; i < aliases.length; i++) {
 					XMPAliasInfo info = aliases[i];
-					XMPPath path = XMPPathParser.expandXPath(info.getNamespace(), info
-							.getPropName());
-					XMPNode actualProp = XMPNodeUtils
-							.findNode(xmpImpl.getRoot(), path, false, null);
-					if (actualProp != null)
-					{
+					XMPPath path = XMPPathParser.expandXPath(info.getNamespace(), info.getPropName());
+					XMPNode actualProp = XMPNodeUtils.findNode(xmpImpl.getRoot(), path, false, null);
+					if (actualProp != null) {
 						XMPNode parent = actualProp.getParent();
 						parent.removeChild(actualProp);
 					}
 				}
 			}
-		}
-		else
-		{
+		} else {
 			// Remove all appropriate properties from all schema. In this case
 			// we don't have to be
 			// concerned with aliases, they are handled implicitly from the
 			// actual properties.
-			for (Iterator<XMPNode> it = xmpImpl.getRoot().iterateChildren(); it.hasNext();)
-			{
+			for (Iterator<XMPNode> it = xmpImpl.getRoot().iterateChildren(); it.hasNext();) {
 				XMPNode schema = it.next();
-				if (removeSchemaChildren(schema, doAllProperties))
-				{
+				if (removeSchemaChildren(schema, doAllProperties)) {
 					it.remove();
 				}
 			}
 		}
 	}
 
-
 	/**
 	 * @see XMPUtils#appendProperties(XMPMeta, XMPMeta, boolean, boolean)
-	 * @param source The source XMP object.
-	 * @param destination The destination XMP object.
-	 * @param doAllProperties Do internal properties in addition to external properties.
-	 * @param replaceOldValues Replace the values of existing properties.
-	 * @param deleteEmptyValues Delete destination values if source property is empty. 
-	 * @throws XMPException Forwards the Exceptions from the metadata processing
+	 * @param source
+	 *            The source XMP object.
+	 * @param destination
+	 *            The destination XMP object.
+	 * @param doAllProperties
+	 *            Do internal properties in addition to external properties.
+	 * @param replaceOldValues
+	 *            Replace the values of existing properties.
+	 * @param deleteEmptyValues
+	 *            Delete destination values if source property is empty.
+	 * @throws XMPException
+	 *             Forwards the Exceptions from the metadata processing
 	 */
-	public static void appendProperties(XMPMeta source, XMPMeta destination,
-			boolean doAllProperties, boolean replaceOldValues, boolean deleteEmptyValues) 
-		throws XMPException
-	{
+	public static void appendProperties(XMPMeta source, XMPMeta destination, boolean doAllProperties,
+			boolean replaceOldValues, boolean deleteEmptyValues) throws XMPException {
 		ParameterAsserts.assertImplementation(source);
 		ParameterAsserts.assertImplementation(destination);
 
 		XMPMetaImpl src = (XMPMetaImpl) source;
 		XMPMetaImpl dest = (XMPMetaImpl) destination;
 
-		for (Iterator<XMPNode> it = src.getRoot().iterateChildren(); it.hasNext();)
-		{
+		for (Iterator<XMPNode> it = src.getRoot().iterateChildren(); it.hasNext();) {
 			XMPNode sourceSchema = it.next();
-			
+
 			// Make sure we have a destination schema node
-			XMPNode destSchema = XMPNodeUtils.findSchemaNode(dest.getRoot(),
-					sourceSchema.getName(), false);
+			XMPNode destSchema = XMPNodeUtils.findSchemaNode(dest.getRoot(), sourceSchema.getName(), false);
 			boolean createdSchema = false;
-			if (destSchema == null)
-			{
+			if (destSchema == null) {
 				destSchema = new XMPNode(sourceSchema.getName(), sourceSchema.getValue(),
 						new PropertyOptions().setSchemaNode(true));
 				dest.getRoot().addChild(destSchema);
 				createdSchema = true;
 			}
 
-			// Process the source schema's children.			
-			for (Iterator<XMPNode> ic = sourceSchema.iterateChildren(); ic.hasNext();)
-			{
+			// Process the source schema's children.
+			for (Iterator<XMPNode> ic = sourceSchema.iterateChildren(); ic.hasNext();) {
 				XMPNode sourceProp = ic.next();
-				if (doAllProperties
-						|| !Utils.isInternalProperty(sourceSchema.getName(), sourceProp.getName()))
-				{
-					appendSubtree(
-						dest, sourceProp, destSchema, replaceOldValues, deleteEmptyValues);
+				if (doAllProperties || !Utils.isInternalProperty(sourceSchema.getName(), sourceProp.getName())) {
+					appendSubtree(dest, sourceProp, destSchema, replaceOldValues, deleteEmptyValues);
 				}
 			}
 
-			if (!destSchema.hasChildren()  &&  (createdSchema  ||  deleteEmptyValues))
-			{
+			if (!destSchema.hasChildren() && (createdSchema || deleteEmptyValues)) {
 				// Don't create an empty schema / remove empty schema.
 				dest.getRoot().removeChild(destSchema);
 			}
 		}
 	}
 
-
 	/**
 	 * Remove all schema children according to the flag
-	 * <code>doAllProperties</code>. Empty schemas are automatically remove
-	 * by <code>XMPNode</code>
+	 * <code>doAllProperties</code>. Empty schemas are automatically remove by
+	 * <code>XMPNode</code>
 	 * 
 	 * @param schemaNode
 	 *            a schema node
@@ -569,162 +405,130 @@ public class XMPUtilsImpl implements XMPConst
 	 *            flag if all properties or only externals shall be removed.
 	 * @return Returns true if the schema is empty after the operation.
 	 */
-	private static boolean removeSchemaChildren(XMPNode schemaNode, boolean doAllProperties)
-	{
-		for (Iterator<XMPNode> it = schemaNode.iterateChildren(); it.hasNext();)
-		{
+	private static boolean removeSchemaChildren(XMPNode schemaNode, boolean doAllProperties) {
+		for (Iterator<XMPNode> it = schemaNode.iterateChildren(); it.hasNext();) {
 			XMPNode currProp = it.next();
-			if (doAllProperties
-					|| !Utils.isInternalProperty(schemaNode.getName(), currProp.getName()))
-			{
+			if (doAllProperties || !Utils.isInternalProperty(schemaNode.getName(), currProp.getName())) {
 				it.remove();
 			}
 		}
-		
+
 		return !schemaNode.hasChildren();
 	}
 
-
 	/**
-	 * @see XMPUtilsImpl#appendProperties(XMPMeta, XMPMeta, boolean, boolean, boolean)
-	 * @param destXMP The destination XMP object.
-	 * @param sourceNode the source node
-	 * @param destParent the parent of the destination node
-	 * @param replaceOldValues Replace the values of existing properties.
-	 * @param deleteEmptyValues flag if properties with empty values should be deleted 
-	 * 		   in the destination object.
+	 * @see XMPUtilsImpl#appendProperties(XMPMeta, XMPMeta, boolean, boolean,
+	 *      boolean)
+	 * @param destXMP
+	 *            The destination XMP object.
+	 * @param sourceNode
+	 *            the source node
+	 * @param destParent
+	 *            the parent of the destination node
+	 * @param replaceOldValues
+	 *            Replace the values of existing properties.
+	 * @param deleteEmptyValues
+	 *            flag if properties with empty values should be deleted in the
+	 *            destination object.
 	 * @throws XMPException
 	 */
 	private static void appendSubtree(XMPMetaImpl destXMP, XMPNode sourceNode, XMPNode destParent,
-			boolean replaceOldValues, boolean deleteEmptyValues) throws XMPException
-	{
+			boolean replaceOldValues, boolean deleteEmptyValues) throws XMPException {
 		XMPNode destNode = XMPNodeUtils.findChildNode(destParent, sourceNode.getName(), false);
 
 		boolean valueIsEmpty = false;
-		if (deleteEmptyValues)
-		{
-			valueIsEmpty = sourceNode.getOptions().isSimple() ?
-				sourceNode.getValue() == null  ||  sourceNode.getValue().length() == 0 :
-				!sourceNode.hasChildren();
+		if (deleteEmptyValues) {
+			valueIsEmpty = sourceNode.getOptions().isSimple()
+					? sourceNode.getValue() == null || sourceNode.getValue().length() == 0
+					: !sourceNode.hasChildren();
 		}
-		
-		if (deleteEmptyValues  &&  valueIsEmpty)
-		{
-			if (destNode != null)
-			{
+
+		if (deleteEmptyValues && valueIsEmpty) {
+			if (destNode != null) {
 				destParent.removeChild(destNode);
 			}
-		} 
-		else if (destNode == null)
-		{
+		} else if (destNode == null) {
 			// The one easy case, the destination does not exist.
 			destParent.addChild((XMPNode) sourceNode.clone());
-		}
-		else if (replaceOldValues)
-		{
+		} else if (replaceOldValues) {
 			// The destination exists and should be replaced.
 			destXMP.setNode(destNode, sourceNode.getValue(), sourceNode.getOptions(), true);
 			destParent.removeChild(destNode);
 			destNode = (XMPNode) sourceNode.clone();
 			destParent.addChild(destNode);
-		}
-		else
-		{
+		} else {
 			// The destination exists and is not totally replaced. Structs and
 			// arrays are merged.
 
 			PropertyOptions sourceForm = sourceNode.getOptions();
 			PropertyOptions destForm = destNode.getOptions();
-			if (sourceForm != destForm)
-			{
+			if (sourceForm != destForm) {
 				return;
 			}
-			if (sourceForm.isStruct())
-			{
-				// To merge a struct process the fields recursively. E.g. add simple missing fields.
-				// The recursive call to AppendSubtree will handle deletion for fields with empty 
+			if (sourceForm.isStruct()) {
+				// To merge a struct process the fields recursively. E.g. add simple missing
+				// fields.
+				// The recursive call to AppendSubtree will handle deletion for fields with
+				// empty
 				// values.
-				for (Iterator<XMPNode> it = sourceNode.iterateChildren(); it.hasNext();)
-				{
+				for (Iterator<XMPNode> it = sourceNode.iterateChildren(); it.hasNext();) {
 					XMPNode sourceField = it.next();
-					appendSubtree(destXMP, sourceField, destNode, 
-						replaceOldValues, deleteEmptyValues);
-					if (deleteEmptyValues  &&  !destNode.hasChildren())
-					{
+					appendSubtree(destXMP, sourceField, destNode, replaceOldValues, deleteEmptyValues);
+					if (deleteEmptyValues && !destNode.hasChildren()) {
 						destParent.removeChild(destNode);
 					}
 				}
-			}
-			else if (sourceForm.isArrayAltText())
-			{
-				// Merge AltText arrays by the "xml:lang" qualifiers. Make sure x-default is first. 
-				// Make a special check for deletion of empty values. Meaningful in AltText arrays 
-				// because the "xml:lang" qualifier provides unambiguous source/dest correspondence.
-				for (Iterator<XMPNode> it = sourceNode.iterateChildren(); it.hasNext();)
-				{
+			} else if (sourceForm.isArrayAltText()) {
+				// Merge AltText arrays by the "xml:lang" qualifiers. Make sure x-default is
+				// first.
+				// Make a special check for deletion of empty values. Meaningful in AltText
+				// arrays
+				// because the "xml:lang" qualifier provides unambiguous source/dest
+				// correspondence.
+				for (Iterator<XMPNode> it = sourceNode.iterateChildren(); it.hasNext();) {
 					XMPNode sourceItem = it.next();
-					if (!sourceItem.hasQualifier()
-							|| !XMPConst.XML_LANG.equals(sourceItem.getQualifier(1).getName()))
-					{
+					if (!sourceItem.hasQualifier() || !XMPConst.XML_LANG.equals(sourceItem.getQualifier(1).getName())) {
 						continue;
 					}
-					
-					int destIndex = XMPNodeUtils.lookupLanguageItem(destNode, 
-							sourceItem.getQualifier(1).getValue());
-					if (deleteEmptyValues  &&  
-							(sourceItem.getValue() == null  ||
-							 sourceItem.getValue().length() == 0))
-					{
-						if (destIndex != -1)
-						{
+
+					int destIndex = XMPNodeUtils.lookupLanguageItem(destNode, sourceItem.getQualifier(1).getValue());
+					if (deleteEmptyValues && (sourceItem.getValue() == null || sourceItem.getValue().length() == 0)) {
+						if (destIndex != -1) {
 							destNode.removeChild(destIndex);
-							if (!destNode.hasChildren())
-							{
+							if (!destNode.hasChildren()) {
 								destParent.removeChild(destNode);
 							}
-						}	
-					}
-					else if (destIndex == -1)
-					{
-						// Not replacing, keep the existing item.						
-						if (!XMPConst.X_DEFAULT.equals(sourceItem.getQualifier(1).getValue())
-								|| !destNode.hasChildren())
-						{
-							sourceItem.cloneSubtree(destNode);
 						}
-						else
-						{
-							XMPNode destItem = new XMPNode(
-								sourceItem.getName(), 
-								sourceItem.getValue(), 
-								sourceItem.getOptions());
+					} else if (destIndex == -1) {
+						// Not replacing, keep the existing item.
+						if (!XMPConst.X_DEFAULT.equals(sourceItem.getQualifier(1).getValue())
+								|| !destNode.hasChildren()) {
+							sourceItem.cloneSubtree(destNode);
+						} else {
+							XMPNode destItem = new XMPNode(sourceItem.getName(), sourceItem.getValue(),
+									sourceItem.getOptions());
 							sourceItem.cloneSubtree(destItem);
 							destNode.addChild(1, destItem);
-						}	
+						}
 					}
-				}				
-			}
-			else if (sourceForm.isArray())
-			{
-				// Merge other arrays by item values. Don't worry about order or duplicates. Source 
-				// items with empty values do not cause deletion, that conflicts horribly with 
+				}
+			} else if (sourceForm.isArray()) {
+				// Merge other arrays by item values. Don't worry about order or duplicates.
+				// Source
+				// items with empty values do not cause deletion, that conflicts horribly with
 				// merging.
 
-				for (Iterator<XMPNode> is = sourceNode.iterateChildren(); is.hasNext();)
-				{
+				for (Iterator<XMPNode> is = sourceNode.iterateChildren(); is.hasNext();) {
 					XMPNode sourceItem = is.next();
 
 					boolean match = false;
-					for (Iterator<XMPNode> id = destNode.iterateChildren(); id.hasNext();)
-					{
+					for (Iterator<XMPNode> id = destNode.iterateChildren(); id.hasNext();) {
 						XMPNode destItem = id.next();
-						if (itemValuesMatch(sourceItem, destItem))
-						{
+						if (itemValuesMatch(sourceItem, destItem)) {
 							match = true;
 						}
 					}
-					if (!match)
-					{
+					if (!match) {
 						destNode = (XMPNode) sourceItem.clone();
 						destParent.addChild(destNode);
 					}
@@ -733,64 +537,52 @@ public class XMPUtilsImpl implements XMPConst
 		}
 	}
 
-
 	/**
 	 * Compares two nodes including its children and qualifier.
-	 * @param leftNode an <code>XMPNode</code>
-	 * @param rightNode an <code>XMPNode</code>
+	 * 
+	 * @param leftNode
+	 *            an <code>XMPNode</code>
+	 * @param rightNode
+	 *            an <code>XMPNode</code>
 	 * @return Returns true if the nodes are equal, false otherwise.
-	 * @throws XMPException Forwards exceptions to the calling method.
+	 * @throws XMPException
+	 *             Forwards exceptions to the calling method.
 	 */
-	private static boolean itemValuesMatch(XMPNode leftNode, XMPNode rightNode) throws XMPException
-	{
+	private static boolean itemValuesMatch(XMPNode leftNode, XMPNode rightNode) throws XMPException {
 		PropertyOptions leftForm = leftNode.getOptions();
 		PropertyOptions rightForm = rightNode.getOptions();
 
-		if (leftForm.equals(rightForm))
-		{
+		if (leftForm.equals(rightForm)) {
 			return false;
 		}
 
-		if (leftForm.getOptions() == 0)
-		{
+		if (leftForm.getOptions() == 0) {
 			// Simple nodes, check the values and xml:lang qualifiers.
-			if (!leftNode.getValue().equals(rightNode.getValue()))
-			{
+			if (!leftNode.getValue().equals(rightNode.getValue())) {
 				return false;
 			}
-			if (leftNode.getOptions().getHasLanguage() != rightNode.getOptions().getHasLanguage())
-			{
+			if (leftNode.getOptions().getHasLanguage() != rightNode.getOptions().getHasLanguage()) {
 				return false;
 			}
 			if (leftNode.getOptions().getHasLanguage()
-					&& !leftNode.getQualifier(1).getValue().equals(
-							rightNode.getQualifier(1).getValue()))
-			{
+					&& !leftNode.getQualifier(1).getValue().equals(rightNode.getQualifier(1).getValue())) {
 				return false;
 			}
-		}
-		else if (leftForm.isStruct())
-		{
+		} else if (leftForm.isStruct()) {
 			// Struct nodes, see if all fields match, ignoring order.
 
-			if (leftNode.getChildrenLength() != rightNode.getChildrenLength())
-			{
+			if (leftNode.getChildrenLength() != rightNode.getChildrenLength()) {
 				return false;
 			}
 
-			for (Iterator<XMPNode> it = leftNode.iterateChildren(); it.hasNext();)
-			{
+			for (Iterator<XMPNode> it = leftNode.iterateChildren(); it.hasNext();) {
 				XMPNode leftField = it.next();
-				XMPNode rightField = XMPNodeUtils.findChildNode(rightNode, leftField.getName(),
-						false);
-				if (rightField == null || !itemValuesMatch(leftField, rightField))
-				{
+				XMPNode rightField = XMPNodeUtils.findChildNode(rightNode, leftField.getName(), false);
+				if (rightField == null || !itemValuesMatch(leftField, rightField)) {
 					return false;
 				}
 			}
-		}
-		else
-		{
+		} else {
 			// Array nodes, see if the "leftNode" values are present in the
 			// "rightNode", ignoring order, duplicates,
 			// and extra values in the rightNode-> The rightNode is the
@@ -798,22 +590,18 @@ public class XMPUtilsImpl implements XMPConst
 
 			assert leftForm.isArray();
 
-			for (Iterator<XMPNode> il = leftNode.iterateChildren(); il.hasNext();)
-			{
+			for (Iterator<XMPNode> il = leftNode.iterateChildren(); il.hasNext();) {
 				XMPNode leftItem = il.next();
 
 				boolean match = false;
-				for (Iterator<XMPNode> ir = rightNode.iterateChildren(); ir.hasNext();)
-				{
+				for (Iterator<XMPNode> ir = rightNode.iterateChildren(); ir.hasNext();) {
 					XMPNode rightItem = ir.next();
-					if (itemValuesMatch(leftItem, rightItem))
-					{
+					if (itemValuesMatch(leftItem, rightItem)) {
 						match = true;
 						break;
 					}
 				}
-				if (!match)
-				{
+				if (!match) {
 					return false;
 				}
 			}
@@ -821,42 +609,30 @@ public class XMPUtilsImpl implements XMPConst
 		return true; // All of the checks passed.
 	}
 
-
 	/**
-	 * Make sure the separator is OK. It must be one semicolon surrounded by
-	 * zero or more spaces. Any of the recognized semicolons or spaces are
-	 * allowed.
+	 * Make sure the separator is OK. It must be one semicolon surrounded by zero or
+	 * more spaces. Any of the recognized semicolons or spaces are allowed.
 	 * 
 	 * @param separator
 	 * @throws XMPException
 	 */
-	private static void checkSeparator(String separator) throws XMPException
-	{
+	private static void checkSeparator(String separator) throws XMPException {
 		boolean haveSemicolon = false;
-		for (int i = 0; i < separator.length(); i++)
-		{
+		for (int i = 0; i < separator.length(); i++) {
 			int charKind = classifyCharacter(separator.charAt(i));
-			if (charKind == UCK_SEMICOLON)
-			{
-				if (haveSemicolon)
-				{
-					throw new XMPException("Separator can have only one semicolon", 
-						XMPError.BADPARAM);
+			if (charKind == UCK_SEMICOLON) {
+				if (haveSemicolon) {
+					throw new XMPException("Separator can have only one semicolon", XMPError.BADPARAM);
 				}
 				haveSemicolon = true;
-			}
-			else if (charKind != UCK_SPACE)
-			{
-				throw new XMPException("Separator can have only spaces and one semicolon",
-						XMPError.BADPARAM);
+			} else if (charKind != UCK_SPACE) {
+				throw new XMPException("Separator can have only spaces and one semicolon", XMPError.BADPARAM);
 			}
 		}
-		if (!haveSemicolon)
-		{
+		if (!haveSemicolon) {
 			throw new XMPException("Separator must have one semicolon", XMPError.BADPARAM);
 		}
 	}
-
 
 	/**
 	 * Make sure the open and close quotes are a legitimate pair and return the
@@ -869,91 +645,67 @@ public class XMPUtilsImpl implements XMPConst
 	 * @return Returns a corresponding closing quote.
 	 * @throws XMPException
 	 */
-	private static char checkQuotes(String quotes, char openQuote) throws XMPException
-	{
+	private static char checkQuotes(String quotes, char openQuote) throws XMPException {
 		char closeQuote;
 
 		int charKind = classifyCharacter(openQuote);
-		if (charKind != UCK_QUOTE)
-		{
+		if (charKind != UCK_QUOTE) {
 			throw new XMPException("Invalid quoting character", XMPError.BADPARAM);
 		}
 
-		if (quotes.length() == 1)
-		{
+		if (quotes.length() == 1) {
 			closeQuote = openQuote;
-		}
-		else
-		{
+		} else {
 			closeQuote = quotes.charAt(1);
 			charKind = classifyCharacter(closeQuote);
-			if (charKind != UCK_QUOTE)
-			{
+			if (charKind != UCK_QUOTE) {
 				throw new XMPException("Invalid quoting character", XMPError.BADPARAM);
 			}
 		}
 
-		if (closeQuote != getClosingQuote(openQuote))
-		{
+		if (closeQuote != getClosingQuote(openQuote)) {
 			throw new XMPException("Mismatched quote pair", XMPError.BADPARAM);
 		}
 		return closeQuote;
 	}
 
-
 	/**
-	 * Classifies the character into normal chars, spaces, semicola, quotes,
-	 * control chars.
+	 * Classifies the character into normal chars, spaces, semicola, quotes, control
+	 * chars.
 	 * 
 	 * @param ch
 	 *            a char
 	 * @return Return the character kind.
 	 */
-	private static int classifyCharacter(char ch)
-	{
-		if (SPACES.indexOf(ch) >= 0 || (0x2000 <= ch && ch <= 0x200B))
-		{
+	private static int classifyCharacter(char ch) {
+		if (SPACES.indexOf(ch) >= 0 || (0x2000 <= ch && ch <= 0x200B)) {
 			return UCK_SPACE;
-		}
-		else if (COMMAS.indexOf(ch) >= 0)
-		{
+		} else if (COMMAS.indexOf(ch) >= 0) {
 			return UCK_COMMA;
-		}
-		else if (SEMICOLA.indexOf(ch) >= 0)
-		{
+		} else if (SEMICOLA.indexOf(ch) >= 0) {
 			return UCK_SEMICOLON;
-		}
-		else if (QUOTES.indexOf(ch) >= 0 || (0x3008 <= ch && ch <= 0x300F)
-				|| (0x2018 <= ch && ch <= 0x201F))
-		{
+		} else if (QUOTES.indexOf(ch) >= 0 || (0x3008 <= ch && ch <= 0x300F) || (0x2018 <= ch && ch <= 0x201F)) {
 			return UCK_QUOTE;
-		}
-		else if (ch < 0x0020 || CONTROLS.indexOf(ch) >= 0)
-		{
+		} else if (ch < 0x0020 || CONTROLS.indexOf(ch) >= 0) {
 			return UCK_CONTROL;
-		}
-		else
-		{
+		} else {
 			// Assume typical case.
 			return UCK_NORMAL;
 		}
 	}
-
 
 	/**
 	 * @param openQuote
 	 *            the open quote char
 	 * @return Returns the matching closing quote for an open quote.
 	 */
-	private static char getClosingQuote(char openQuote)
-	{
-		switch (openQuote)
-		{
+	private static char getClosingQuote(char openQuote) {
+		switch (openQuote) {
 		case 0x0022:
 			return 0x0022; // ! U+0022 is both opening and closing.
-//		Not interpreted as brackets anymore
-//		case 0x005B: 
-//			return 0x005D;
+		// Not interpreted as brackets anymore
+		// case 0x005B:
+		// return 0x005D;
 		case 0x00AB:
 			return 0x00BB; // ! U+00AB and U+00BB are reversible.
 		case 0x00BB:
@@ -987,7 +739,6 @@ public class XMPUtilsImpl implements XMPConst
 		}
 	}
 
-
 	/**
 	 * Add quotes to the item.
 	 * 
@@ -1001,14 +752,11 @@ public class XMPUtilsImpl implements XMPConst
 	 *            flag if commas are allowed
 	 * @return Returns the value in quotes.
 	 */
-	private static String applyQuotes(String item, char openQuote, char closeQuote,
-			boolean allowCommas)
-	{
-		if (item == null)
-		{
+	private static String applyQuotes(String item, char openQuote, char closeQuote, boolean allowCommas) {
+		if (item == null) {
 			item = "";
 		}
-		
+
 		boolean prevSpace = false;
 		int charOffset;
 		int charKind;
@@ -1027,38 +775,28 @@ public class XMPUtilsImpl implements XMPConst
 		// look quoted.
 
 		int i;
-		for (i = 0; i < item.length(); i++)
-		{
+		for (i = 0; i < item.length(); i++) {
 			char ch = item.charAt(i);
 			charKind = classifyCharacter(ch);
-			if (i == 0 && charKind == UCK_QUOTE)
-			{
+			if (i == 0 && charKind == UCK_QUOTE) {
 				break;
 			}
 
-			if (charKind == UCK_SPACE)
-			{
+			if (charKind == UCK_SPACE) {
 				// Multiple spaces are a separator.
-				if (prevSpace)
-				{
+				if (prevSpace) {
 					break;
 				}
 				prevSpace = true;
-			}
-			else
-			{
+			} else {
 				prevSpace = false;
-				if ((charKind == UCK_SEMICOLON || charKind == UCK_CONTROL)
-						|| (charKind == UCK_COMMA && !allowCommas))
-				{
+				if ((charKind == UCK_SEMICOLON || charKind == UCK_CONTROL) || (charKind == UCK_COMMA && !allowCommas)) {
 					break;
 				}
 			}
 		}
 
-
-		if (i < item.length())
-		{
+		if (i < item.length()) {
 			// Create a quoted copy, doubling any internal quotes that match the
 			// outer ones. Internal quotes did not stop the "needs quoting"
 			// search, but they do need
@@ -1068,10 +806,8 @@ public class XMPUtilsImpl implements XMPConst
 
 			StringBuffer newItem = new StringBuffer(item.length() + 2);
 			int splitPoint;
-			for (splitPoint = 0; splitPoint <= i; splitPoint++)
-			{
-				if (classifyCharacter(item.charAt(i)) == UCK_QUOTE)
-				{
+			for (splitPoint = 0; splitPoint <= i; splitPoint++) {
+				if (classifyCharacter(item.charAt(i)) == UCK_QUOTE) {
 					break;
 				}
 			}
@@ -1079,12 +815,10 @@ public class XMPUtilsImpl implements XMPConst
 			// Copy the leading "normal" portion.
 			newItem.append(openQuote).append(item.substring(0, splitPoint));
 
-			for (charOffset = splitPoint; charOffset < item.length(); charOffset++)
-			{
+			for (charOffset = splitPoint; charOffset < item.length(); charOffset++) {
 				newItem.append(item.charAt(charOffset));
 				if (classifyCharacter(item.charAt(charOffset)) == UCK_QUOTE
-						&& isSurroundingQuote(item.charAt(charOffset), openQuote, closeQuote))
-				{
+						&& isSurroundingQuote(item.charAt(charOffset), openQuote, closeQuote)) {
 					newItem.append(item.charAt(charOffset));
 				}
 			}
@@ -1097,32 +831,32 @@ public class XMPUtilsImpl implements XMPConst
 		return item;
 	}
 
-
 	/**
-	 * @param ch a character
-	 * @param openQuote the opening quote char
-	 * @param closeQuote the closing quote char 
+	 * @param ch
+	 *            a character
+	 * @param openQuote
+	 *            the opening quote char
+	 * @param closeQuote
+	 *            the closing quote char
 	 * @return Return it the character is a surrounding quote.
 	 */
-	private static boolean isSurroundingQuote(char ch, char openQuote, char closeQuote)
-	{
+	private static boolean isSurroundingQuote(char ch, char openQuote, char closeQuote) {
 		return ch == openQuote || isClosingingQuote(ch, openQuote, closeQuote);
 	}
 
-
 	/**
-	 * @param ch a character
-	 * @param openQuote the opening quote char
-	 * @param closeQuote the closing quote char 
+	 * @param ch
+	 *            a character
+	 * @param openQuote
+	 *            the opening quote char
+	 * @param closeQuote
+	 *            the closing quote char
 	 * @return Returns true if the character is a closing quote.
 	 */
-	private static boolean isClosingingQuote(char ch, char openQuote, char closeQuote)
-	{
+	private static boolean isClosingingQuote(char ch, char openQuote, char closeQuote) {
 		return ch == closeQuote || (openQuote == 0x301D && ch == 0x301E || ch == 0x301F);
 	}
-	
-	
-	
+
 	/**
 	 * U+0022 ASCII space<br>
 	 * U+3000, ideographic space<br>
@@ -1161,13 +895,11 @@ public class XMPUtilsImpl implements XMPConst
 	 * U+2018..U+201F, various quotes.<br>
 	 * U+2039 and U+203A, guillemet quotes.
 	 */
-	private static final String QUOTES = 
-		"\"\u00AB\u00BB\u301D\u301E\u301F\u2015\u2039\u203A";
-		// "\"\u005B\u005D\u00AB\u00BB\u301D\u301E\u301F\u2015\u2039\u203A";
+	private static final String QUOTES = "\"\u00AB\u00BB\u301D\u301E\u301F\u2015\u2039\u203A";
 	/**
 	 * U+0000..U+001F ASCII controls<br>
 	 * U+2028, line separator.<br>
 	 * U+2029, paragraph separator.
 	 */
-	private static final String CONTROLS = "\u2028\u2029";	
+	private static final String CONTROLS = "\u2028\u2029";
 }

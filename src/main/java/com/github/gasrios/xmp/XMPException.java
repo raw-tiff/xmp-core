@@ -9,49 +9,24 @@
 
 package com.github.gasrios.xmp;
 
-/**
- * This exception wraps all errors that occur in the XMP Toolkit.
- * 
- * @since   16.02.2006
- */
-public class XMPException extends RuntimeException
-{
+public class XMPException extends RuntimeException {
+
 	private static final long serialVersionUID = -2923540786785662373L;
 
-	/** the errorCode of the XMP toolkit */
 	private int errorCode;
 
-
-	/**
-	 * Constructs an exception with a message and an error code. 
-	 * @param message the message
-	 * @param errorCode the error code
-	 */
-	public XMPException(String message, int errorCode)
-	{
+	public XMPException(String message, int errorCode) {
 		super(message);
 		this.errorCode = errorCode;
 	}
 
-
-	/**
-	 * Constructs an exception with a message, an error code and a <code>Throwable</code>
-	 * @param message the error message.
-	 * @param errorCode the error code
-	 * @param t the exception source
-	 */
-	public XMPException(String message, int errorCode, Throwable t)
-	{
+	public XMPException(String message, int errorCode, Throwable t) {
 		super(message, t);
 		this.errorCode = errorCode;
 	}
 
-
-	/**
-	 * @return Returns the errorCode.
-	 */
-	public int getErrorCode()
-	{
+	public int getErrorCode() {
 		return errorCode;
 	}
+
 }
