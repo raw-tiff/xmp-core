@@ -20,7 +20,7 @@ bintray {
 	user	= project.property('bintrayUser')
 	key		= project.property('bintrayApiKey')
 	dryRun	= true
-	publish	= true
+	publish	= false
 	configurations = ['archives']
 	pkg {
 		repo		= 'maven'
