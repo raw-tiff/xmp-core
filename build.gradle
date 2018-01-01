@@ -26,6 +26,6 @@ bintray {
 		repo		= 'maven'
 		name		= 'xmp-core'
 		licenses	= ['BSD 3-Clause']
-		vcsUrl		= 'https://github.com/gasrios/XMPCoreJava.git'
+		vcsUrl		= 'https://github.com/gasrios/xmp-core.git'
 	}
 }
