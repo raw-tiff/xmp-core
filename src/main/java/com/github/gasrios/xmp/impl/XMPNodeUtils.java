@@ -148,10 +148,8 @@ public class XMPNodeUtils implements XMPConst {
 		else if (value instanceof Long) strValue = XMPUtils.convertFromLong(((Long) value).longValue());
 		else if (value instanceof Double) strValue = XMPUtils.convertFromDouble(((Double) value).doubleValue());
 		else if (value instanceof XMPDateTime) strValue = XMPUtils.convertFromDate((XMPDateTime) value);
-		else if (value instanceof GregorianCalendar) {
-			XMPDateTime dt = XMPDateTimeFactory.createFromCalendar((GregorianCalendar) value);
-			strValue = XMPUtils.convertFromDate(dt);
-		}
+		else if (value instanceof GregorianCalendar)
+			strValue = XMPUtils.convertFromDate(XMPDateTimeFactory.createFromCalendar((GregorianCalendar) value));
 		else if (value instanceof byte[]) strValue = XMPUtils.encodeBase64((byte[]) value);
 		else strValue = value.toString();
 		return strValue != null ? Utils.removeControlChars(strValue) : null;
@@ -234,8 +232,7 @@ public class XMPNodeUtils implements XMPConst {
 			int index = XMPNodeUtils.lookupLanguageItem(arrayNode, qualValue);
 			if (index < 0 && (aliasForm & AliasOptions.PROP_ARRAY_ALT_TEXT) > 0) {
 				XMPNode langNode = new XMPNode(ARRAY_ITEM_NAME, null);
-				XMPNode xdefault = new XMPNode(XML_LANG, X_DEFAULT, null);
-				langNode.addQualifier(xdefault);
+				langNode.addQualifier(new XMPNode(XML_LANG, X_DEFAULT, null));
 				arrayNode.addChild(1, langNode);
 				return 1;
 			} else return index;

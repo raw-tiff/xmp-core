@@ -90,14 +90,14 @@ public final class ISO8601Converter {
 			input.skip();
 			tzHour = input.gatherInt("Invalid time zone hour in date string", 23);
 			if (input.hasNext()) {
-				if (input.ch() == ':') {
+				if (input.ch() != ':') throw new XMPException("Invalid date string, after time zone hour", XMPError.BADVALUE);
+				else {
 					input.skip();
 					tzMinute = input.gatherInt("Invalid time zone minute in date string", 59);
-				} else throw new XMPException("Invalid date string, after time zone hour", XMPError.BADVALUE);
+				}
 			}
 		}
-		int offset = (tzHour * 3600 * 1000 + tzMinute * 60 * 1000) * tzSign;
-		binValue.setTimeZone(new SimpleTimeZone(offset, ""));
+		binValue.setTimeZone(new SimpleTimeZone((tzHour * 3600 * 1000 + tzMinute * 60 * 1000) * tzSign, ""));
 		if (input.hasNext()) throw new XMPException("Invalid date string, extra chars at end", XMPError.BADVALUE);
 		return binValue;
 	}
@@ -119,13 +119,11 @@ public final class ISO8601Converter {
 				buffer.append(':');
 				buffer.append(df.format(dateTime.getMinute()));
 				if (dateTime.getSecond() != 0 || dateTime.getNanoSecond() != 0) {
-					double seconds = dateTime.getSecond() + dateTime.getNanoSecond() / 1e9d;
 					df.applyPattern(":00.#########");
-					buffer.append(df.format(seconds));
+					buffer.append(df.format(dateTime.getSecond() + dateTime.getNanoSecond() / 1e9d));
 				}
 				if (dateTime.hasTimeZone()) {
-					long timeInMillis = dateTime.getCalendar().getTimeInMillis();
-					int offset = dateTime.getTimeZone().getOffset(timeInMillis);
+					int offset = dateTime.getTimeZone().getOffset(dateTime.getCalendar().getTimeInMillis());
 					if (offset == 0) buffer.append('Z');
 					else {
 						int thours = offset / 3600000;

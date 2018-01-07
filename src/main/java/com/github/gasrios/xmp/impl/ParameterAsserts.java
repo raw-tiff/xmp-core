@@ -19,39 +19,31 @@ class ParameterAsserts implements XMPConst {
 	private ParameterAsserts() {}
 
 	public static void assertArrayName(String arrayName) throws XMPException {
-		if (arrayName == null || arrayName.length() == 0)
-			throw new XMPException("Empty array name", XMPError.BADPARAM);
+		if (arrayName == null || arrayName.length() == 0) throw new XMPException("Empty array name", XMPError.BADPARAM);
 	}
 
 	public static void assertPropName(String propName) throws XMPException {
-		if (propName == null || propName.length() == 0)
-			throw new XMPException("Empty property name", XMPError.BADPARAM);
+		if (propName == null || propName.length() == 0) throw new XMPException("Empty property name", XMPError.BADPARAM);
 	}
 
 	public static void assertSchemaNS(String schemaNS) throws XMPException {
-		if (schemaNS == null || schemaNS.length() == 0)
-			throw new XMPException("Empty schema namespace URI", XMPError.BADPARAM);
+		if (schemaNS == null || schemaNS.length() == 0) throw new XMPException("Empty schema namespace URI", XMPError.BADPARAM);
 	}
 
 	public static void assertPrefix(String prefix) throws XMPException {
-		if (prefix == null || prefix.length() == 0)
-			throw new XMPException("Empty prefix", XMPError.BADPARAM);
+		if (prefix == null || prefix.length() == 0) throw new XMPException("Empty prefix", XMPError.BADPARAM);
 	}
 
 	public static void assertSpecificLang(String specificLang) throws XMPException {
-		if (specificLang == null || specificLang.length() == 0) {
-			throw new XMPException("Empty specific language", XMPError.BADPARAM);
-		}
+		if (specificLang == null || specificLang.length() == 0) throw new XMPException("Empty specific language", XMPError.BADPARAM);
 	}
 
 	public static void assertStructName(String structName) throws XMPException {
-		if (structName == null || structName.length() == 0)
-			throw new XMPException("Empty array name", XMPError.BADPARAM);
+		if (structName == null || structName.length() == 0) throw new XMPException("Empty array name", XMPError.BADPARAM);
 	}
 
 	public static void assertNotNull(Object param) throws XMPException {
-		if (param == null)
-			throw new XMPException("Parameter must not be null", XMPError.BADPARAM);
+		if (param == null) throw new XMPException("Parameter must not be null", XMPError.BADPARAM);
 		else if ((param instanceof String) && ((String) param).length() == 0)
 			throw new XMPException("Parameter must not be null or empty", XMPError.BADPARAM);
 	}

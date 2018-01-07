@@ -21,7 +21,6 @@ import com.github.gasrios.xmp.XMPException;
 import com.github.gasrios.xmp.XMPMeta;
 import com.github.gasrios.xmp.XMPMetaFactory;
 import com.github.gasrios.xmp.XMPUtils;
-import com.github.gasrios.xmp.impl.xpath.XMPPath;
 import com.github.gasrios.xmp.impl.xpath.XMPPathParser;
 import com.github.gasrios.xmp.options.ParseOptions;
 import com.github.gasrios.xmp.options.PropertyOptions;
@@ -51,10 +50,9 @@ public class XMPNormalizer {
 			String nameStr = tree.getName().toLowerCase();
 			if (nameStr.startsWith("uuid:")) nameStr = nameStr.substring(5);
 			if (Utils.checkUUIDFormat(nameStr)) {
-				XMPPath path = XMPPathParser.expandXPath(XMPConst.NS_XMP_MM, "InstanceID");
-				XMPNode idNode = XMPNodeUtils.findNode(tree, path, true, null);
+				XMPNode idNode = XMPNodeUtils.findNode(tree, XMPPathParser.expandXPath(XMPConst.NS_XMP_MM, "InstanceID"), true, null);
 				if (idNode != null) {
-					idNode.setOptions(null); // Clobber any existing xmpMM:InstanceID.
+					idNode.setOptions(null);
 					idNode.setValue("uuid:" + nameStr);
 					idNode.removeChildren();
 					idNode.removeQualifiers();
@@ -93,10 +91,8 @@ public class XMPNormalizer {
 				currProp.setName(XMPConst.ARRAY_ITEM_NAME);
 				newArray.addChild(currProp);
 				dcSchema.replaceChild(i, newArray);
-				if (arrayForm.isArrayAltText() && !currProp.getOptions().getHasLanguage()) {
-					XMPNode newLang = new XMPNode(XMPConst.XML_LANG, XMPConst.X_DEFAULT, null);
-					currProp.addQualifier(newLang);
-				}
+				if (arrayForm.isArrayAltText() && !currProp.getOptions().getHasLanguage())
+					currProp.addQualifier(new XMPNode(XMPConst.XML_LANG, XMPConst.X_DEFAULT, null));
 			} else {
 				currProp.getOptions().setOption(
 					PropertyOptions.ARRAY |
@@ -120,10 +116,7 @@ public class XMPNormalizer {
 			else if (!currChild.getOptions().getHasLanguage()) {
 				String childValue = currChild.getValue();
 				if (childValue == null || childValue.length() == 0) it.remove();
-				else {
-					XMPNode repairLang = new XMPNode(XMPConst.XML_LANG, "x-repair", null);
-					currChild.addQualifier(repairLang);
-				}
+				else currChild.addQualifier(new XMPNode(XMPConst.XML_LANG, "x-repair", null));
 			}
 		}
 	}
@@ -179,8 +172,7 @@ public class XMPNormalizer {
 	private static void transplantArrayItemAlias(Iterator<XMPNode> propertyIt, XMPNode childNode, XMPNode baseArray) throws XMPException {
 		if (baseArray.getOptions().isArrayAltText()) {
 			if (childNode.getOptions().getHasLanguage()) throw new XMPException("Alias to x-default already has a language qualifier", XMPError.BADXMP);
-			XMPNode langQual = new XMPNode(XMPConst.XML_LANG, XMPConst.X_DEFAULT, null);
-			childNode.addQualifier(langQual);
+			childNode.addQualifier(new XMPNode(XMPConst.XML_LANG, XMPConst.X_DEFAULT, null));
 		}
 		propertyIt.remove();
 		childNode.setName(XMPConst.ARRAY_ITEM_NAME);
@@ -225,26 +217,19 @@ public class XMPNormalizer {
 				aliasNode.getQualifierLength() != baseNode.getQualifierLength()
 			)
 		) throw new XMPException("Mismatch between alias and base nodes", XMPError.BADXMP);
-		for (Iterator<XMPNode> an = aliasNode.iterateChildren(), bn = baseNode.iterateChildren(); an.hasNext() && bn.hasNext();) {
-			XMPNode aliasChild = an.next();
-			XMPNode baseChild = bn.next();
-			compareAliasedSubtrees(aliasChild, baseChild, false);
-		}
-		for (Iterator<XMPNode> an = aliasNode.iterateQualifier(), bn = baseNode.iterateQualifier(); an.hasNext() && bn.hasNext();) {
-			XMPNode aliasQual = an.next();
-			XMPNode baseQual = bn.next();
-			compareAliasedSubtrees(aliasQual, baseQual, false);
-		}
+		for (Iterator<XMPNode> an = aliasNode.iterateChildren(), bn = baseNode.iterateChildren(); an.hasNext() && bn.hasNext();)
+			compareAliasedSubtrees(an.next(), bn.next(), false);
+		for (Iterator<XMPNode> an = aliasNode.iterateQualifier(), bn = baseNode.iterateQualifier(); an.hasNext() && bn.hasNext();)
+			compareAliasedSubtrees(an.next(), bn.next(), false);
 	}
 
 	private static void migrateAudioCopyright(XMPMeta xmp, XMPNode dmCopyright) {
 		try {
-			XMPNode dcSchema = XMPNodeUtils.findSchemaNode(((XMPMetaImpl) xmp).getRoot(), XMPConst.NS_DC, true);
 			String dmValue = dmCopyright.getValue();
-			String doubleLF = "\n\n";
-			XMPNode dcRightsArray = XMPNodeUtils.findChildNode(dcSchema, "dc:rights", false);
+			XMPNode dcRightsArray =
+					XMPNodeUtils.findChildNode(XMPNodeUtils.findSchemaNode(((XMPMetaImpl) xmp).getRoot(), XMPConst.NS_DC, true), "dc:rights", false);
 			if (dcRightsArray == null || !dcRightsArray.hasChildren()) {
-				dmValue = doubleLF + dmValue;
+				dmValue = "\n\n" + dmValue;
 				xmp.setLocalizedText(XMPConst.NS_DC, "rights", "", XMPConst.X_DEFAULT, dmValue, null);
 			} else {
 				int xdIndex = XMPNodeUtils.lookupLanguageItem(dcRightsArray, XMPConst.X_DEFAULT);
@@ -255,9 +240,9 @@ public class XMPNormalizer {
 				}
 				XMPNode defaultNode = dcRightsArray.getChild(xdIndex);
 				String defaultValue = defaultNode.getValue();
-				int lfPos = defaultValue.indexOf(doubleLF);
+				int lfPos = defaultValue.indexOf("\n\n");
 				if (lfPos < 0) {
-					if (!dmValue.equals(defaultValue)) defaultNode.setValue(defaultValue + doubleLF + dmValue);
+					if (!dmValue.equals(defaultValue)) defaultNode.setValue(defaultValue + "\n\n" + dmValue);
 				} else if (!defaultValue.substring(lfPos + 2).equals(dmValue))
 					defaultNode.setValue(defaultValue.substring(0, lfPos + 2) + dmValue);
 			}

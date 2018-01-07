@@ -63,7 +63,7 @@ public class XMPSerializerRDF {
 
 	private SerializeOptions options;
 
-	private int unicodeSize = 1; // UTF-8
+	private int unicodeSize = 1;
 
 	private int padding;
 
@@ -179,7 +179,7 @@ public class XMPSerializerRDF {
 			endOuterRDFDescription(level);
 		} else {
 			writeIndent(level + 1);
-			write(RDF_SCHEMA_START); // Special case an empty XMP object.
+			write(RDF_SCHEMA_START);
 			writeTreeName();
 			write("/>");
 			writeNewline();
@@ -200,27 +200,18 @@ public class XMPSerializerRDF {
 		Set<String> usedPrefixes = new HashSet<String>();
 		usedPrefixes.add("xml");
 		usedPrefixes.add("rdf");
-		for (Iterator<XMPNode> it = xmp.getRoot().iterateChildren(); it.hasNext();) {
-			XMPNode schema = it.next();
-			declareUsedNamespaces(schema, usedPrefixes, level + 3);
-		}
+		for (Iterator<XMPNode> it = xmp.getRoot().iterateChildren(); it.hasNext();) declareUsedNamespaces(it.next(), usedPrefixes, level + 3);
 		boolean allAreAttrs = true;
-		for (Iterator<XMPNode> it = xmp.getRoot().iterateChildren(); it.hasNext();) {
-			XMPNode schema = it.next();
-			allAreAttrs &= serializeCompactRDFAttrProps(schema, level + 2);
-		}
+		for (Iterator<XMPNode> it = xmp.getRoot().iterateChildren(); it.hasNext();) allAreAttrs &= serializeCompactRDFAttrProps(it.next(), level + 2);
 		if (!allAreAttrs) {
 			write('>');
 			writeNewline();
 		} else {
 			write("/>");
 			writeNewline();
-			return; // ! Done if all properties in all schema are written as attributes.
+			return;
 		}
-		for (Iterator<XMPNode> it = xmp.getRoot().iterateChildren(); it.hasNext();) {
-			XMPNode schema = it.next();
-			serializeCompactRDFElementProps(schema, level + 2);
-		}
+		for (Iterator<XMPNode> it = xmp.getRoot().iterateChildren(); it.hasNext();) serializeCompactRDFElementProps(it.next(), level + 2);
 		writeIndent(level + 1);
 		write(RDF_SCHEMA_END);
 		writeNewline();
@@ -320,10 +311,9 @@ public class XMPSerializerRDF {
 		boolean hasElemFields = false;
 		boolean emitEndTag = true;
 		for (Iterator<XMPNode> ic = node.iterateChildren(); ic.hasNext();) {
-			XMPNode field = ic.next();
-			if (canBeRDFAttrProp(field)) hasAttrFields = true;
+			if (canBeRDFAttrProp(ic.next())) hasAttrFields = true;
 			else hasElemFields = true;
-			if (hasAttrFields && hasElemFields) break; // No sense looking further.
+			if (hasAttrFields && hasElemFields) break;
 		}
 		if (hasRDFResourceQual && hasElemFields) throw new XMPException("Can't mix rdf:resource qualifier and element fields", XMPError.BADRDF);
 		if (!node.hasChildren()) {
@@ -368,19 +358,11 @@ public class XMPSerializerRDF {
 	}
 
 	private void declareUsedNamespaces(XMPNode node, Set<String> usedPrefixes, int indent) throws IOException {
-		if (node.getOptions().isSchemaNode()) {
-			String prefix = node.getValue().substring(0, node.getValue().length() - 1);
-			declareNamespace(prefix, node.getName(), usedPrefixes, indent);
-		} else if (node.getOptions().isStruct()) {
-			for (Iterator<XMPNode> it = node.iterateChildren(); it.hasNext();) {
-				XMPNode field = it.next();
-				declareNamespace(field.getName(), null, usedPrefixes, indent);
-			}
-		}
-		for (Iterator<XMPNode> it = node.iterateChildren(); it.hasNext();) {
-			XMPNode child = it.next();
-			declareUsedNamespaces(child, usedPrefixes, indent);
-		}
+		if (node.getOptions().isSchemaNode())
+			declareNamespace(node.getValue().substring(0, node.getValue().length() - 1), node.getName(), usedPrefixes, indent);
+		else if (node.getOptions().isStruct()) for (Iterator<XMPNode> it = node.iterateChildren(); it.hasNext();)
+			declareNamespace(it.next().getName(), null, usedPrefixes, indent);
+		for (Iterator<XMPNode> it = node.iterateChildren(); it.hasNext();) declareUsedNamespaces(it.next(), usedPrefixes, indent);
 		for (Iterator<XMPNode> it = node.iterateQualifier(); it.hasNext();) {
 			XMPNode qualifier = it.next();
 			declareNamespace(qualifier.getName(), null, usedPrefixes, indent);
@@ -428,7 +410,7 @@ public class XMPSerializerRDF {
 	}
 
 	private void serializeCanonicalRDFProperty(XMPNode node, boolean useCanonicalRDF, boolean emitAsRDFValue, int indent)
-			throws IOException, XMPException {
+	throws IOException, XMPException {
 		boolean emitEndTag = true;
 		boolean indentEndTag = true;
 		String elemName = node.getName();
@@ -496,10 +478,8 @@ public class XMPSerializerRDF {
 				writeNewline();
 				emitRDFArrayTag(node, true, indent + 1);
 				if (node.getOptions().isArrayAltText()) XMPNodeUtils.normalizeLangArray(node);
-				for (Iterator<XMPNode> it = node.iterateChildren(); it.hasNext();) {
-					XMPNode child = it.next();
-					serializeCanonicalRDFProperty(child, useCanonicalRDF, false, indent + 2);
-				}
+				for (Iterator<XMPNode> it = node.iterateChildren(); it.hasNext();)
+					serializeCanonicalRDFProperty(it.next(), useCanonicalRDF, false, indent + 2);
 				emitRDFArrayTag(node, false, indent + 1);
 			} else if (!hasRDFResourceQual) {
 				if (!node.hasChildren()) {

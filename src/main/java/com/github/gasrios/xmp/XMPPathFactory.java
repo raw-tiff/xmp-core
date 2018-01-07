@@ -28,7 +28,7 @@ public final class XMPPathFactory {
 		assertFieldName(fieldName);
 		XMPPath fieldPath = XMPPathParser.expandXPath(fieldNS, fieldName);
 		if (fieldPath.size() != 2) throw new XMPException("The field name must be simple", XMPError.BADXPATH);
-		return '/' + fieldPath.getSegment(XMPPath.STEP_ROOT_PROP).getName();
+		return "/" + fieldPath.getSegment(XMPPath.STEP_ROOT_PROP).getName();
 	}
 
 	public static String composeQualifierPath(String qualNS, String qualName) throws XMPException {

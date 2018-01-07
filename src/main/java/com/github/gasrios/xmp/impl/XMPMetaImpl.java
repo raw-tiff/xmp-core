@@ -58,7 +58,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 	}
 
 	public void appendArrayItem(String schemaNS, String arrayName, PropertyOptions arrayOptions, String itemValue, PropertyOptions itemOptions)
-			throws XMPException {
+	throws XMPException {
 		ParameterAsserts.assertSchemaNS(schemaNS);
 		ParameterAsserts.assertArrayName(arrayName);
 		if (arrayOptions == null) arrayOptions = new PropertyOptions();
@@ -84,8 +84,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 	public int countArrayItems(String schemaNS, String arrayName) throws XMPException {
 		ParameterAsserts.assertSchemaNS(schemaNS);
 		ParameterAsserts.assertArrayName(arrayName);
-		XMPPath arrayPath = XMPPathParser.expandXPath(schemaNS, arrayName);
-		XMPNode arrayNode = XMPNodeUtils.findNode(tree, arrayPath, false, null);
+		XMPNode arrayNode = XMPNodeUtils.findNode(tree, XMPPathParser.expandXPath(schemaNS, arrayName), false, null);
 		if (arrayNode == null) return 0;
 		if (arrayNode.getOptions().isArray()) return arrayNode.getChildrenLength();
 		else throw new XMPException("The named property is not an array", XMPError.BADXPATH);
@@ -95,8 +94,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 		try {
 			ParameterAsserts.assertSchemaNS(schemaNS);
 			ParameterAsserts.assertArrayName(arrayName);
-			String itemPath = XMPPathFactory.composeArrayItemPath(arrayName, itemIndex);
-			deleteProperty(schemaNS, itemPath);
+			deleteProperty(schemaNS, XMPPathFactory.composeArrayItemPath(arrayName, itemIndex));
 		} catch (XMPException e) {}
 	}
 
@@ -104,8 +102,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 		try {
 			ParameterAsserts.assertSchemaNS(schemaNS);
 			ParameterAsserts.assertPropName(propName);
-			XMPPath expPath = XMPPathParser.expandXPath(schemaNS, propName);
-			XMPNode propNode = XMPNodeUtils.findNode(tree, expPath, false, null);
+			XMPNode propNode = XMPNodeUtils.findNode(tree, XMPPathParser.expandXPath(schemaNS, propName), false, null);
 			if (propNode != null) XMPNodeUtils.deleteNode(propNode);
 		} catch (XMPException e) {}
 	}
@@ -114,8 +111,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 		try {
 			ParameterAsserts.assertSchemaNS(schemaNS);
 			ParameterAsserts.assertPropName(propName);
-			String qualPath = propName + XMPPathFactory.composeQualifierPath(qualNS, qualName);
-			deleteProperty(schemaNS, qualPath);
+			deleteProperty(schemaNS, propName + XMPPathFactory.composeQualifierPath(qualNS, qualName));
 		} catch (XMPException e) {}
 	}
 
@@ -123,8 +119,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 		try {
 			ParameterAsserts.assertSchemaNS(schemaNS);
 			ParameterAsserts.assertStructName(structName);
-			String fieldPath = structName + XMPPathFactory.composeStructFieldPath(fieldNS, fieldName);
-			deleteProperty(schemaNS, fieldPath);
+			deleteProperty(schemaNS, structName + XMPPathFactory.composeStructFieldPath(fieldNS, fieldName));
 		} catch (XMPException e) {}
 	}
 
@@ -132,9 +127,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 		try {
 			ParameterAsserts.assertSchemaNS(schemaNS);
 			ParameterAsserts.assertPropName(propName);
-			XMPPath expPath = XMPPathParser.expandXPath(schemaNS, propName);
-			final XMPNode propNode = XMPNodeUtils.findNode(tree, expPath, false, null);
-			return propNode != null;
+			return XMPNodeUtils.findNode(tree, XMPPathParser.expandXPath(schemaNS, propName), false, null) != null;
 		} catch (XMPException e) {
 			return false;
 		}
@@ -144,8 +137,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 		try {
 			ParameterAsserts.assertSchemaNS(schemaNS);
 			ParameterAsserts.assertArrayName(arrayName);
-			String path = XMPPathFactory.composeArrayItemPath(arrayName, itemIndex);
-			return doesPropertyExist(schemaNS, path);
+			return doesPropertyExist(schemaNS, XMPPathFactory.composeArrayItemPath(arrayName, itemIndex));
 		} catch (XMPException e) {
 			return false;
 		}
@@ -155,8 +147,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 		try {
 			ParameterAsserts.assertSchemaNS(schemaNS);
 			ParameterAsserts.assertStructName(structName);
-			String path = XMPPathFactory.composeStructFieldPath(fieldNS, fieldName);
-			return doesPropertyExist(schemaNS, structName + path);
+			return doesPropertyExist(schemaNS, structName + XMPPathFactory.composeStructFieldPath(fieldNS, fieldName));
 		} catch (XMPException e) {
 			return false;
 		}
@@ -166,8 +157,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 		try {
 			ParameterAsserts.assertSchemaNS(schemaNS);
 			ParameterAsserts.assertPropName(propName);
-			String path = XMPPathFactory.composeQualifierPath(qualNS, qualName);
-			return doesPropertyExist(schemaNS, propName + path);
+			return doesPropertyExist(schemaNS, propName + XMPPathFactory.composeQualifierPath(qualNS, qualName));
 		} catch (XMPException e) {
 			return false;
 		}
@@ -176,8 +166,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 	public XMPProperty getArrayItem(String schemaNS, String arrayName, int itemIndex) throws XMPException {
 		ParameterAsserts.assertSchemaNS(schemaNS);
 		ParameterAsserts.assertArrayName(arrayName);
-		String itemPath = XMPPathFactory.composeArrayItemPath(arrayName, itemIndex);
-		return getProperty(schemaNS, itemPath);
+		return getProperty(schemaNS, XMPPathFactory.composeArrayItemPath(arrayName, itemIndex));
 	}
 
 	public XMPProperty getLocalizedText(String schemaNS, String altTextName, String genericLang, String specificLang) throws XMPException {
@@ -186,8 +175,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 		ParameterAsserts.assertSpecificLang(specificLang);
 		genericLang = genericLang != null ? Utils.normalizeLangValue(genericLang) : null;
 		specificLang = Utils.normalizeLangValue(specificLang);
-		XMPPath arrayPath = XMPPathParser.expandXPath(schemaNS, altTextName);
-		XMPNode arrayNode = XMPNodeUtils.findNode(tree, arrayPath, false, null);
+		XMPNode arrayNode = XMPNodeUtils.findNode(tree, XMPPathParser.expandXPath(schemaNS, altTextName), false, null);
 		if (arrayNode == null) return null;
 		Object[] result = XMPNodeUtils.chooseLocalizedText(arrayNode, genericLang, specificLang);
 		int match = ((Integer) result[0]).intValue();
@@ -211,17 +199,16 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 	}
 
 	public void setLocalizedText(String schemaNS, String altTextName, String genericLang, String specificLang, String itemValue, PropertyOptions options)
-			throws XMPException {
+	throws XMPException {
 		ParameterAsserts.assertSchemaNS(schemaNS);
 		ParameterAsserts.assertArrayName(altTextName);
 		ParameterAsserts.assertSpecificLang(specificLang);
 		genericLang = genericLang != null ? Utils.normalizeLangValue(genericLang) : null;
 		specificLang = Utils.normalizeLangValue(specificLang);
-		XMPPath arrayPath = XMPPathParser.expandXPath(schemaNS, altTextName);
 		XMPNode arrayNode =
 			XMPNodeUtils.findNode(
 				tree,
-				arrayPath,
+				XMPPathParser.expandXPath(schemaNS, altTextName),
 				true,
 				new PropertyOptions(
 					PropertyOptions.ARRAY |
@@ -268,18 +255,15 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 				assert haveXDefault && xdItem == itemNode;
 				for (Iterator<XMPNode> it = arrayNode.iterateChildren(); it.hasNext();) {
 					XMPNode currItem = it.next();
-					if (currItem == xdItem || !currItem.getValue().equals(xdItem != null ? xdItem.getValue() : null)) {
-						continue;
-					}
+					if (currItem == xdItem || !currItem.getValue().equals(xdItem != null ? xdItem.getValue() : null)) continue;
 					currItem.setValue(itemValue);
 				}
 				if (xdItem != null) xdItem.setValue(itemValue);
 			}
 			break;
 		case XMPNodeUtils.CLT_SINGLE_GENERIC:
-			if (haveXDefault && xdItem != itemNode && xdItem != null && xdItem.getValue().equals(itemNode.getValue()))
-				xdItem.setValue(itemValue);
-			itemNode.setValue(itemValue); // ! Do this after
+			if (haveXDefault && xdItem != itemNode && xdItem != null && xdItem.getValue().equals(itemNode.getValue())) xdItem.setValue(itemValue);
+			itemNode.setValue(itemValue);
 			break;
 		case XMPNodeUtils.CLT_MULTIPLE_GENERIC:
 			XMPNodeUtils.appendLangItem(arrayNode, specificLang, itemValue);
@@ -299,8 +283,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 		if (!haveXDefault && arrayNode.getChildrenLength() == 1) XMPNodeUtils.appendLangItem(arrayNode, XMPConst.X_DEFAULT, itemValue);
 	}
 
-	public void setLocalizedText(String schemaNS, String altTextName, String genericLang, String specificLang, String itemValue)
-			throws XMPException {
+	public void setLocalizedText(String schemaNS, String altTextName, String genericLang, String specificLang, String itemValue) throws XMPException {
 		setLocalizedText(schemaNS, altTextName, genericLang, specificLang, itemValue, null);
 	}
 
@@ -311,8 +294,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 	protected XMPProperty getProperty(String schemaNS, String propName, int valueType) throws XMPException {
 		ParameterAsserts.assertSchemaNS(schemaNS);
 		ParameterAsserts.assertPropName(propName);
-		final XMPPath expPath = XMPPathParser.expandXPath(schemaNS, propName);
-		final XMPNode propNode = XMPNodeUtils.findNode(tree, expPath, false, null);
+		final XMPNode propNode = XMPNodeUtils.findNode(tree, XMPPathParser.expandXPath(schemaNS, propName), false, null);
 		if (propNode != null) {
 			if (valueType != VALUE_STRING && propNode.getOptions().isCompositeProperty())
 				throw new XMPException("Property must be simple when a value type is requested", XMPError.BADXPATH);
@@ -337,8 +319,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 	protected Object getPropertyObject(String schemaNS, String propName, int valueType) throws XMPException {
 		ParameterAsserts.assertSchemaNS(schemaNS);
 		ParameterAsserts.assertPropName(propName);
-		final XMPPath expPath = XMPPathParser.expandXPath(schemaNS, propName);
-		final XMPNode propNode = XMPNodeUtils.findNode(tree, expPath, false, null);
+		final XMPNode propNode = XMPNodeUtils.findNode(tree, XMPPathParser.expandXPath(schemaNS, propName), false, null);
 		if (propNode != null) {
 			if (valueType != VALUE_STRING && propNode.getOptions().isCompositeProperty())
 				throw new XMPException("Property must be simple when a value type is requested", XMPError.BADXPATH);
@@ -437,15 +418,13 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 	public XMPProperty getQualifier(String schemaNS, String propName, String qualNS, String qualName) throws XMPException {
 		ParameterAsserts.assertSchemaNS(schemaNS);
 		ParameterAsserts.assertPropName(propName);
-		String qualPath = propName + XMPPathFactory.composeQualifierPath(qualNS, qualName);
-		return getProperty(schemaNS, qualPath);
+		return getProperty(schemaNS, propName + XMPPathFactory.composeQualifierPath(qualNS, qualName));
 	}
 
 	public XMPProperty getStructField(String schemaNS, String structName, String fieldNS, String fieldName) throws XMPException {
 		ParameterAsserts.assertSchemaNS(schemaNS);
 		ParameterAsserts.assertStructName(structName);
-		String fieldPath = structName + XMPPathFactory.composeStructFieldPath(fieldNS, fieldName);
-		return getProperty(schemaNS, fieldPath);
+		return getProperty(schemaNS, structName + XMPPathFactory.composeStructFieldPath(fieldNS, fieldName));
 	}
 
 	public XMPIterator iterator() throws XMPException {
@@ -463,8 +442,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 	public void setArrayItem(String schemaNS, String arrayName, int itemIndex, String itemValue, PropertyOptions options) throws XMPException {
 		ParameterAsserts.assertSchemaNS(schemaNS);
 		ParameterAsserts.assertArrayName(arrayName);
-		XMPPath arrayPath = XMPPathParser.expandXPath(schemaNS, arrayName);
-		XMPNode arrayNode = XMPNodeUtils.findNode(tree, arrayPath, false, null);
+		XMPNode arrayNode = XMPNodeUtils.findNode(tree, XMPPathParser.expandXPath(schemaNS, arrayName), false, null);
 		if (arrayNode != null) doSetArrayItem(arrayNode, itemIndex, itemValue, options, false);
 		else throw new XMPException("Specified array does not exist", XMPError.BADXPATH);
 	}
@@ -476,8 +454,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 	public void insertArrayItem(String schemaNS, String arrayName, int itemIndex, String itemValue, PropertyOptions options) throws XMPException {
 		ParameterAsserts.assertSchemaNS(schemaNS);
 		ParameterAsserts.assertArrayName(arrayName);
-		XMPPath arrayPath = XMPPathParser.expandXPath(schemaNS, arrayName);
-		XMPNode arrayNode = XMPNodeUtils.findNode(tree, arrayPath, false, null);
+		XMPNode arrayNode = XMPNodeUtils.findNode(tree, XMPPathParser.expandXPath(schemaNS, arrayName), false, null);
 		if (arrayNode != null) doSetArrayItem(arrayNode, itemIndex, itemValue, options, true);
 		else throw new XMPException("Specified array does not exist", XMPError.BADXPATH);
 	}
@@ -490,8 +467,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 		ParameterAsserts.assertSchemaNS(schemaNS);
 		ParameterAsserts.assertPropName(propName);
 		options = XMPNodeUtils.verifySetOptions(options, propValue);
-		XMPPath expPath = XMPPathParser.expandXPath(schemaNS, propName);
-		XMPNode propNode = XMPNodeUtils.findNode(tree, expPath, true, options);
+		XMPNode propNode = XMPNodeUtils.findNode(tree, XMPPathParser.expandXPath(schemaNS, propName), true, options);
 		if (propNode != null) setNode(propNode, propValue, options, false);
 		else throw new XMPException("Specified property does not exist", XMPError.BADXPATH);
 	}
@@ -513,11 +489,10 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 	}
 
 	public void setStructField(String schemaNS, String structName, String fieldNS, String fieldName, String fieldValue, PropertyOptions options)
-			throws XMPException {
+	throws XMPException {
 		ParameterAsserts.assertSchemaNS(schemaNS);
 		ParameterAsserts.assertStructName(structName);
-		String fieldPath = structName + XMPPathFactory.composeStructFieldPath(fieldNS, fieldName);
-		setProperty(schemaNS, fieldPath, fieldValue, options);
+		setProperty(schemaNS, structName + XMPPathFactory.composeStructFieldPath(fieldNS, fieldName), fieldValue, options);
 	}
 
 	public void setStructField(String schemaNS, String structName, String fieldNS, String fieldName, String fieldValue) throws XMPException {
@@ -553,8 +528,7 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 	}
 
 	public void normalize(ParseOptions options) throws XMPException {
-		if (options == null) options = new ParseOptions();
-		XMPNormalizer.process(this, options);
+		XMPNormalizer.process(this, options != null? options : new ParseOptions());
 	}
 
 	public XMPNode getRoot() {
@@ -588,25 +562,23 @@ public class XMPMetaImpl implements XMPMeta, XMPConst {
 		final Object value;
 		String rawValue = propNode.getValue();
 		switch (valueType) {
-		case VALUE_BOOLEAN: value = new Boolean(XMPUtils.convertToBoolean(rawValue));
-		break;
-		case VALUE_INTEGER: value = new Integer(XMPUtils.convertToInteger(rawValue));
-		break;
-		case VALUE_LONG: value = new Long(XMPUtils.convertToLong(rawValue));
-		break;
-		case VALUE_DOUBLE: value = new Double(XMPUtils.convertToDouble(rawValue));
-		break;
-		case VALUE_DATE: value = XMPUtils.convertToDate(rawValue);
-		break;
-		case VALUE_CALENDAR:
-			XMPDateTime dt = XMPUtils.convertToDate(rawValue);
-			value = dt.getCalendar();
-		break;
-		case VALUE_BASE64: value = XMPUtils.decodeBase64(rawValue);
-		break;
-		case VALUE_STRING:
-		default: value = rawValue != null || propNode.getOptions().isCompositeProperty() ? rawValue : "";
-		break;
+			case VALUE_BOOLEAN: value = new Boolean(XMPUtils.convertToBoolean(rawValue));
+			break;
+			case VALUE_INTEGER: value = new Integer(XMPUtils.convertToInteger(rawValue));
+			break;
+			case VALUE_LONG: value = new Long(XMPUtils.convertToLong(rawValue));
+			break;
+			case VALUE_DOUBLE: value = new Double(XMPUtils.convertToDouble(rawValue));
+			break;
+			case VALUE_DATE: value = XMPUtils.convertToDate(rawValue);
+			break;
+			case VALUE_CALENDAR: value = XMPUtils.convertToDate(rawValue).getCalendar();
+			break;
+			case VALUE_BASE64: value = XMPUtils.decodeBase64(rawValue);
+			break;
+			case VALUE_STRING:
+			default: value = rawValue != null || propNode.getOptions().isCompositeProperty() ? rawValue : "";
+			break;
 		}
 		return value;
 	}

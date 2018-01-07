@@ -154,11 +154,7 @@ public class XMPIteratorImpl implements XMPIterator {
 				skipSiblings = false;
 				subIterator = ITERATOR;
 			}
-			if ((!subIterator.hasNext()) && iterator.hasNext()) {
-				XMPNode child = iterator.next();
-				subIterator = new NodeIterator(child, path, ++index);
-			}
-
+			if ((!subIterator.hasNext()) && iterator.hasNext()) subIterator = new NodeIterator(iterator.next(), path, ++index);
 			if (subIterator.hasNext()) {
 				returnProperty = (XMPPropertyInfo) subIterator.next();
 				return true;
@@ -197,10 +193,10 @@ public class XMPIteratorImpl implements XMPIterator {
 			final String value = node.getOptions().isSchemaNode() ? null : node.getValue();
 			return new XMPPropertyInfo() {
 				public String getNamespace() {
-					if (!node.getOptions().isSchemaNode()) {
-						QName qname = new QName(node.getName());
-						return XMPMetaFactory.getSchemaRegistry().getNamespaceURI(qname.getPrefix());
-					} else return baseNS;
+					return
+						node.getOptions().isSchemaNode()?
+							baseNS:
+							XMPMetaFactory.getSchemaRegistry().getNamespaceURI(new QName(node.getName()).getPrefix());
 				}
 				public String getPath() {
 					return path;

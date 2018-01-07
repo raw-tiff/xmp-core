@@ -47,7 +47,6 @@ public final class XMPSchemaRegistryImpl implements XMPSchemaRegistry, XMPConst 
 	public synchronized String registerNamespace(String namespaceURI, String suggestedPrefix) throws XMPException {
 		ParameterAsserts.assertSchemaNS(namespaceURI);
 		ParameterAsserts.assertPrefix(suggestedPrefix);
-
 		if (suggestedPrefix.charAt(suggestedPrefix.length() - 1) != ':') suggestedPrefix += ':';
 		if (!Utils.isXMLNameNS(suggestedPrefix.substring(0, suggestedPrefix.length() - 1)))
 			throw new XMPException("The prefix is a bad XML name", XMPError.BADXML);
@@ -80,9 +79,7 @@ public final class XMPSchemaRegistryImpl implements XMPSchemaRegistry, XMPConst 
 	}
 
 	public synchronized String getNamespaceURI(String namespacePrefix) {
-		if (namespacePrefix != null && !namespacePrefix.endsWith(":")) {
-			namespacePrefix += ":";
-		}
+		if (namespacePrefix != null && !namespacePrefix.endsWith(":")) namespacePrefix += ":";
 		return prefixToNamespaceMap.get(namespacePrefix);
 	}
 
@@ -163,29 +160,27 @@ public final class XMPSchemaRegistryImpl implements XMPSchemaRegistry, XMPConst 
 	public synchronized XMPAliasInfo[] findAliases(String aliasNS) {
 		String prefix = getNamespacePrefix(aliasNS);
 		List<XMPAliasInfo> result = new ArrayList<XMPAliasInfo>();
-		if (prefix != null) {
-			for (Iterator<String> it = aliasMap.keySet().iterator(); it.hasNext();) {
-				String qname = it.next();
-				if (qname.startsWith(prefix)) result.add(findAlias(qname));
-			}
-
+		if (prefix != null) for (Iterator<String> it = aliasMap.keySet().iterator(); it.hasNext();) {
+			String qname = it.next();
+			if (qname.startsWith(prefix)) result.add(findAlias(qname));
 		}
 		return (XMPAliasInfo[]) result.toArray(new XMPAliasInfo[result.size()]);
 	}
 
 	synchronized void registerAlias(
-			String aliasNS,
-			String aliasProp,
-			final String actualNS,
-			final String actualProp,
-			final AliasOptions aliasForm) throws XMPException {
+		String aliasNS,
+		String aliasProp,
+		final String actualNS,
+		final String actualProp,
+		final AliasOptions aliasForm)
+	throws XMPException {
 		ParameterAsserts.assertSchemaNS(aliasNS);
 		ParameterAsserts.assertPropName(aliasProp);
 		ParameterAsserts.assertSchemaNS(actualNS);
 		ParameterAsserts.assertPropName(actualProp);
 		final AliasOptions aliasOpts = aliasForm != null
-				? new AliasOptions(XMPNodeUtils.verifySetOptions(aliasForm.toPropertyOptions(), null).getOptions())
-				: new AliasOptions();
+			? new AliasOptions(XMPNodeUtils.verifySetOptions(aliasForm.toPropertyOptions(), null).getOptions())
+			: new AliasOptions();
 		if (p.matcher(aliasProp).find() || p.matcher(actualProp).find())
 			throw new XMPException("Alias and actual property names must be simple", XMPError.BADXPATH);
 		final String aliasPrefix = getNamespacePrefix(aliasNS);
@@ -197,11 +192,21 @@ public final class XMPSchemaRegistryImpl implements XMPSchemaRegistry, XMPConst 
 		else if (aliasMap.containsKey(actualPrefix + actualProp))
 			throw new XMPException("Actual property is already an alias, use the base property", XMPError.BADPARAM);
 		XMPAliasInfo aliasInfo = new XMPAliasInfo() {
-			public String getNamespace() { return actualNS; }
-			public String getPrefix() { return actualPrefix; }
-			public String getPropName() { return actualProp; }
-			public AliasOptions getAliasForm() { return aliasOpts; }
-			public String toString() { return actualPrefix + actualProp + " NS(" + actualNS + "), FORM (" + getAliasForm() + ")"; }
+			public String getNamespace() {
+				return actualNS;
+			}
+			public String getPrefix() {
+				return actualPrefix;
+			}
+			public String getPropName() {
+				return actualProp;
+			}
+			public AliasOptions getAliasForm() {
+				return aliasOpts;
+			}
+			public String toString() {
+				return actualPrefix + actualProp + " NS(" + actualNS + "), FORM (" + getAliasForm() + ")";
+			}
 		};
 		aliasMap.put(key, aliasInfo);
 	}

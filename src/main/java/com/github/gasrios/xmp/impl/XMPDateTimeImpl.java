@@ -45,14 +45,12 @@ public class XMPDateTimeImpl implements XMPDateTime {
 	public XMPDateTimeImpl() {}
 
 	public XMPDateTimeImpl(Calendar calendar) {
-		Date date = calendar.getTime();
-		TimeZone zone = calendar.getTimeZone();
 		GregorianCalendar intCalendar = (GregorianCalendar) Calendar.getInstance(Locale.US);
 		intCalendar.setGregorianChange(new Date(Long.MIN_VALUE));
-		intCalendar.setTimeZone(zone);
-		intCalendar.setTime(date);
+		intCalendar.setTimeZone(calendar.getTimeZone());
+		intCalendar.setTime(calendar.getTime());
 		this.year = intCalendar.get(Calendar.YEAR);
-		this.month = intCalendar.get(Calendar.MONTH) + 1; // cal is from 0..12
+		this.month = intCalendar.get(Calendar.MONTH) + 1;
 		this.day = intCalendar.get(Calendar.DAY_OF_MONTH);
 		this.hour = intCalendar.get(Calendar.HOUR_OF_DAY);
 		this.minute = intCalendar.get(Calendar.MINUTE);
@@ -66,7 +64,7 @@ public class XMPDateTimeImpl implements XMPDateTime {
 		GregorianCalendar calendar = new GregorianCalendar(timeZone);
 		calendar.setTime(date);
 		this.year = calendar.get(Calendar.YEAR);
-		this.month = calendar.get(Calendar.MONTH) + 1; // cal is from 0..12
+		this.month = calendar.get(Calendar.MONTH) + 1;
 		this.day = calendar.get(Calendar.DAY_OF_MONTH);
 		this.hour = calendar.get(Calendar.HOUR_OF_DAY);
 		this.minute = calendar.get(Calendar.MINUTE);
@@ -149,11 +147,7 @@ public class XMPDateTimeImpl implements XMPDateTime {
 
 	public int compareTo(XMPDateTime dt) {
 		long d = getCalendar().getTimeInMillis() - ((XMPDateTime) dt).getCalendar().getTimeInMillis();
-		if (d != 0) return (int) Math.signum(d);
-		else {
-			d = nanoSeconds - ((XMPDateTime) dt).getNanoSecond();
-			return (int) Math.signum(d);
-		}
+		return (int) Math.signum(d != 0? d : nanoSeconds - ((XMPDateTime) dt).getNanoSecond());
 	}
 
 	public TimeZone getTimeZone() {

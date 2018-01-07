@@ -50,8 +50,7 @@ public class ByteBuffer {
 	}
 
 	public ByteBuffer(byte[] buffer, int offset, int length) {
-		if (length > buffer.length - offset)
-			throw new ArrayIndexOutOfBoundsException("Valid length exceeds the buffer length.");
+		if (length > buffer.length - offset) throw new ArrayIndexOutOfBoundsException("Valid length exceeds the buffer length.");
 		this.buffer = new byte[length];
 		System.arraycopy(buffer, offset, this.buffer, 0, length);
 		this.length = length;

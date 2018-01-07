@@ -67,49 +67,30 @@ public class Utils implements XMPConst {
 
 	static boolean isInternalProperty(String schema, String prop) {
 		boolean isInternal = false;
-		if (NS_DC.equals(schema)) {
-			if (
-				"dc:format".equals(prop) ||
-				"dc:language".equals(prop)
-			) isInternal = true;
-		} else if (NS_XMP.equals(schema)) {
-			if (
+		if (NS_DC.equals(schema)) isInternal = "dc:format".equals(prop) || "dc:language".equals(prop);
+		else if (NS_XMP.equals(schema))
+			isInternal =
 				"xmp:BaseURL".equals(prop) ||
 				"xmp:CreatorTool".equals(prop) ||
 				"xmp:Format".equals(prop) ||
 				"xmp:Locale".equals(prop) ||
 				"xmp:MetadataDate".equals(prop) ||
-				"xmp:ModifyDate".equals(prop)
-			) isInternal = true;
-		} else if (NS_PDF.equals(schema)) {
-			if (
+				"xmp:ModifyDate".equals(prop);
+		else if (NS_PDF.equals(schema))
+			isInternal =
 				"pdf:BaseURL".equals(prop) ||
 				"pdf:Creator".equals(prop) ||
 				"pdf:ModDate".equals(prop) ||
 				"pdf:PDFVersion".equals(prop) ||
-				"pdf:Producer".equals(prop)
-			) isInternal = true;
-		} else if (NS_TIFF.equals(schema)) {
-			isInternal = true;
-			if (
-				"tiff:ImageDescription".equals(prop) ||
-				"tiff:Artist".equals(prop) ||
-				"tiff:Copyright".equals(prop)
-			) isInternal = false;
-		} else if (NS_EXIF.equals(schema)) {
-			isInternal = true;
-			if ("exif:UserComment".equals(prop)) isInternal = false;
-		} else if (NS_EXIF_AUX.equals(schema)) {
-			isInternal = true;
-		} else if (NS_PHOTOSHOP.equals(schema)) {
-			if ("photoshop:ICCProfile".equals(prop)) isInternal = true;
-		} else if (NS_CAMERARAW.equals(schema)) {
-			if (
-				"crs:Version".equals(prop) ||
-				"crs:RawFileName".equals(prop) ||
-				"crs:ToneCurveName".equals(prop)
-			) isInternal = true;
-		} else if (NS_ADOBESTOCKPHOTO.equals(schema)) isInternal = true;
+				"pdf:Producer".equals(prop);
+		else if (NS_TIFF.equals(schema))
+			isInternal = !"tiff:ImageDescription".equals(prop) || "tiff:Artist".equals(prop) || "tiff:Copyright".equals(prop);
+		else if (NS_EXIF.equals(schema)) isInternal = !"exif:UserComment".equals(prop);
+		else if (NS_EXIF_AUX.equals(schema)) isInternal = true;
+		else if (NS_PHOTOSHOP.equals(schema)) isInternal = "photoshop:ICCProfile".equals(prop);
+		else if (NS_CAMERARAW.equals(schema))
+			isInternal = "crs:Version".equals(prop) || "crs:RawFileName".equals(prop) || "crs:ToneCurveName".equals(prop);
+		else if (NS_ADOBESTOCKPHOTO.equals(schema)) isInternal = true;
 		else if (NS_XMP_MM.equals(schema)) isInternal = true;
 		else if (TYPE_TEXT.equals(schema)) isInternal = true;
 		else if (TYPE_PAGEDFILE.equals(schema)) isInternal = true;
@@ -193,15 +174,22 @@ public class Utils implements XMPConst {
 	}
 
 	private static boolean isNameStartChar(char ch) {
-		return (ch <= 0xFF && xmlNameStartChars[ch]) || (ch >= 0x100 && ch <= 0x2FF) || (ch >= 0x370 && ch <= 0x37D)
-				|| (ch >= 0x37F && ch <= 0x1FFF) || (ch >= 0x200C && ch <= 0x200D) || (ch >= 0x2070 && ch <= 0x218F)
-				|| (ch >= 0x2C00 && ch <= 0x2FEF) || (ch >= 0x3001 && ch <= 0xD7FF) || (ch >= 0xF900 && ch <= 0xFDCF)
-				|| (ch >= 0xFDF0 && ch <= 0xFFFD) || (ch >= 0x10000 && ch <= 0xEFFFF);
+		return
+			(ch <= 0xFF && xmlNameStartChars[ch]) ||
+			(ch >= 0x100 && ch <= 0x2FF) ||
+			(ch >= 0x370 && ch <= 0x37D) ||
+			(ch >= 0x37F && ch <= 0x1FFF) ||
+			(ch >= 0x200C && ch <= 0x200D) ||
+			(ch >= 0x2070 && ch <= 0x218F) ||
+			(ch >= 0x2C00 && ch <= 0x2FEF) ||
+			(ch >= 0x3001 && ch <= 0xD7FF) ||
+			(ch >= 0xF900 && ch <= 0xFDCF) ||
+			(ch >= 0xFDF0 && ch <= 0xFFFD) ||
+			(ch >= 0x10000 && ch <= 0xEFFFF);
 	}
 
 	private static boolean isNameChar(char ch) {
-		return (ch <= 0xFF && xmlNameChars[ch]) || isNameStartChar(ch) || (ch >= 0x300 && ch <= 0x36F)
-				|| (ch >= 0x203F && ch <= 0x2040);
+		return (ch <= 0xFF && xmlNameChars[ch]) || isNameStartChar(ch) || (ch >= 0x300 && ch <= 0x36F) || (ch >= 0x203F && ch <= 0x2040);
 	}
 
 	private static void initCharTables() {

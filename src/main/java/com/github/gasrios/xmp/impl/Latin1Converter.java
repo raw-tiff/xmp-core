@@ -38,10 +38,7 @@ public class Latin1Converter {
 						for (; expectedBytes < 8 && (test & 0x80) == 0x80; test = test << 1) expectedBytes++;
 						readAheadBuffer[readAhead++] = (byte) b;
 						state = STATE_UTF8CHAR;
-					} else {
-						byte[] utf8 = convertToUTF8((byte) b);
-						out.append(utf8);
-					}
+					} else out.append(convertToUTF8((byte) b));
 					break;
 				case STATE_UTF8CHAR:
 					if (expectedBytes > 0 && (b & 0xC0) == 0x80) {
@@ -53,8 +50,7 @@ public class Latin1Converter {
 							state = STATE_START;
 						}
 					} else {
-						byte[] utf8 = convertToUTF8(readAheadBuffer[0]);
-						out.append(utf8);
+						out.append(convertToUTF8(readAheadBuffer[0]));
 						i = i - readAhead;
 						readAhead = 0;
 						state = STATE_START;
@@ -62,11 +58,7 @@ public class Latin1Converter {
 					break;
 				}
 			}
-			if (state == STATE_UTF8CHAR) for (int j = 0; j < readAhead; j++) {
-				byte b = readAheadBuffer[j];
-				byte[] utf8 = convertToUTF8(b);
-				out.append(utf8);
-			}
+			if (state == STATE_UTF8CHAR) for (int j = 0; j < readAhead; j++) out.append(convertToUTF8(readAheadBuffer[j]));
 			return out;
 		} else return buffer;
 	}

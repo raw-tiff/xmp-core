@@ -305,11 +305,9 @@ class XMPNode implements Comparable<XMPNode> {
 	protected void setParent(XMPNode parent) { this.parent = parent; }
 
 	private XMPNode find(List<XMPNode> list, String expr) {
-		if (list != null) {
-			for (Iterator<XMPNode> it = list.iterator(); it.hasNext();) {
-				XMPNode child = it.next();
-				if (child.getName().equals(expr)) return child;
-			}
+		if (list != null) for (Iterator<XMPNode> it = list.iterator(); it.hasNext();) {
+			XMPNode child = it.next();
+			if (child.getName().equals(expr)) return child;
 		}
 		return null;
 	}

@@ -19,7 +19,7 @@ import com.github.gasrios.xmp.options.SerializeOptions;
 public class XMPSerializerHelper {
 
 	public static void serialize(XMPMetaImpl xmp, OutputStream out, SerializeOptions options) throws XMPException {
-		options = options != null ? options : new SerializeOptions();
+		if (options == null) options = new SerializeOptions();
 		if (options.getSort()) xmp.sort();
 		new XMPSerializerRDF().serialize(xmp, out, options);
 	}

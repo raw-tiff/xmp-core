@@ -49,14 +49,11 @@ public interface XMPMeta extends Cloneable, Iterable<XMPPropertyInfo> {
 	void setStructField(String schemaNS, String structName, String fieldNS, String fieldName, String fieldValue, PropertyOptions options)
 		throws XMPException;
 
-	void setStructField(String schemaNS, String structName, String fieldNS, String fieldName, String fieldValue)
-		throws XMPException;
+	void setStructField(String schemaNS, String structName, String fieldNS, String fieldName, String fieldValue) throws XMPException;
 
-	void setQualifier(String schemaNS, String propName, String qualNS, String qualName, String qualValue, PropertyOptions options)
-		throws XMPException;
+	void setQualifier(String schemaNS, String propName, String qualNS, String qualName, String qualValue, PropertyOptions options) throws XMPException;
 
-	void setQualifier(String schemaNS, String propName, String qualNS, String qualName, String qualValue)
-		throws XMPException;
+	void setQualifier(String schemaNS, String propName, String qualNS, String qualName, String qualValue) throws XMPException;
 
 	void deleteProperty(String schemaNS, String propName);
 
@@ -74,14 +71,12 @@ public interface XMPMeta extends Cloneable, Iterable<XMPPropertyInfo> {
 
 	boolean doesQualifierExist(String schemaNS, String propName, String qualNS, String qualName);
 
-	XMPProperty getLocalizedText(String schemaNS, String altTextName, String genericLang, String specificLang)
-		throws XMPException;
+	XMPProperty getLocalizedText(String schemaNS, String altTextName, String genericLang, String specificLang) throws XMPException;
 
 	void setLocalizedText(String schemaNS, String altTextName, String genericLang, String specificLang, String itemValue, PropertyOptions options)
 		throws XMPException;
 
-	void setLocalizedText(String schemaNS, String altTextName, String genericLang, String specificLang, String itemValue)
-		throws XMPException;
+	void setLocalizedText(String schemaNS, String altTextName, String genericLang, String specificLang, String itemValue) throws XMPException;
 
 	Boolean getPropertyBoolean(String schemaNS, String propName) throws XMPException;
 
@@ -99,13 +94,11 @@ public interface XMPMeta extends Cloneable, Iterable<XMPPropertyInfo> {
 
 	String getPropertyString(String schemaNS, String propName) throws XMPException;
 
-	void setPropertyBoolean(String schemaNS, String propName, boolean propValue, PropertyOptions options)
-		throws XMPException;
+	void setPropertyBoolean(String schemaNS, String propName, boolean propValue, PropertyOptions options) throws XMPException;
 
 	void setPropertyBoolean(String schemaNS, String propName, boolean propValue) throws XMPException;
 
-	void setPropertyInteger(String schemaNS, String propName, int propValue, PropertyOptions options)
-		throws XMPException;
+	void setPropertyInteger(String schemaNS, String propName, int propValue, PropertyOptions options) throws XMPException;
 
 	void setPropertyInteger(String schemaNS, String propName, int propValue) throws XMPException;
 
@@ -113,23 +106,19 @@ public interface XMPMeta extends Cloneable, Iterable<XMPPropertyInfo> {
 
 	void setPropertyLong(String schemaNS, String propName, long propValue) throws XMPException;
 
-	void setPropertyDouble(String schemaNS, String propName, double propValue, PropertyOptions options)
-		throws XMPException;
+	void setPropertyDouble(String schemaNS, String propName, double propValue, PropertyOptions options) throws XMPException;
 
 	void setPropertyDouble(String schemaNS, String propName, double propValue) throws XMPException;
 
-	void setPropertyDate(String schemaNS, String propName, XMPDateTime propValue, PropertyOptions options)
-		throws XMPException;
+	void setPropertyDate(String schemaNS, String propName, XMPDateTime propValue, PropertyOptions options) throws XMPException;
 
 	void setPropertyDate(String schemaNS, String propName, XMPDateTime propValue) throws XMPException;
 
-	void setPropertyCalendar(String schemaNS, String propName, Calendar propValue, PropertyOptions options)
-		throws XMPException;
+	void setPropertyCalendar(String schemaNS, String propName, Calendar propValue, PropertyOptions options) throws XMPException;
 
 	void setPropertyCalendar(String schemaNS, String propName, Calendar propValue) throws XMPException;
 
-	void setPropertyBase64(String schemaNS, String propName, byte[] propValue, PropertyOptions options)
-		throws XMPException;
+	void setPropertyBase64(String schemaNS, String propName, byte[] propValue, PropertyOptions options) throws XMPException;
 
 	void setPropertyBase64(String schemaNS, String propName, byte[] propValue) throws XMPException;
 

@@ -88,8 +88,7 @@ public class ParseRDF implements XMPError, XMPConst {
 		int nodeTerm = getRDFTermKind(xmlNode);
 		if (nodeTerm != RDFTERM_DESCRIPTION && nodeTerm != RDFTERM_OTHER)
 			throw new XMPException("Node element must be rdf:Description or typed node", BADRDF);
-		else if (isTopLevel && nodeTerm == RDFTERM_OTHER)
-			throw new XMPException("Top level typed node not allowed", BADXMP);
+		else if (isTopLevel && nodeTerm == RDFTERM_OTHER) throw new XMPException("Top level typed node not allowed", BADXMP);
 		else {
 			rdf_NodeElementAttrs(xmp, xmpParent, xmlNode, isTopLevel);
 			rdf_PropertyElementList(xmp, xmpParent, xmlNode, isTopLevel);
@@ -101,10 +100,7 @@ public class ParseRDF implements XMPError, XMPConst {
 		int exclusiveAttrs = 0;
 		for (int i = 0; i < xmlNode.getAttributes().getLength(); i++) {
 			Node attribute = xmlNode.getAttributes().item(i);
-			if (
-				"xmlns".equals(attribute.getPrefix()) ||
-				(attribute.getPrefix() == null && "xmlns".equals(attribute.getNodeName()))
-			) continue;
+			if ("xmlns".equals(attribute.getPrefix()) || (attribute.getPrefix() == null && "xmlns".equals(attribute.getNodeName()))) continue;
 			int attrTerm = getRDFTermKind(attribute);
 			switch (attrTerm) {
 			case RDFTERM_ID:
@@ -132,15 +128,13 @@ public class ParseRDF implements XMPError, XMPConst {
 		for (int i = 0; i < xmlParent.getChildNodes().getLength(); i++) {
 			Node currChild = xmlParent.getChildNodes().item(i);
 			if (isWhitespaceNode(currChild)) continue;
-			else if (currChild.getNodeType() != Node.ELEMENT_NODE)
-				throw new XMPException("Expected property element node not found", BADRDF);
+			else if (currChild.getNodeType() != Node.ELEMENT_NODE) throw new XMPException("Expected property element node not found", BADRDF);
 			else rdf_PropertyElement(xmp, xmpParent, currChild, isTopLevel);
 		}
 	}
 
 	private static void rdf_PropertyElement(XMPMetaImpl xmp, XMPNode xmpParent, Node xmlNode, boolean isTopLevel) throws XMPException {
-		int nodeTerm = getRDFTermKind(xmlNode);
-		if (!isPropertyElementName(nodeTerm)) throw new XMPException("Invalid property element name", BADRDF);
+		if (!isPropertyElementName(getRDFTermKind(xmlNode))) throw new XMPException("Invalid property element name", BADRDF);
 		NamedNodeMap attributes = xmlNode.getAttributes();
 		List<String> nsAttrs = null;
 		for (int i = 0; i < attributes.getLength(); i++) {
@@ -150,10 +144,7 @@ public class ParseRDF implements XMPError, XMPConst {
 				nsAttrs.add(attribute.getNodeName());
 			}
 		}
-		if (nsAttrs != null) for (Iterator<String> it = nsAttrs.iterator(); it.hasNext();) {
-			String ns = it.next();
-			attributes.removeNamedItem(ns);
-		}
+		if (nsAttrs != null) for (Iterator<String> it = nsAttrs.iterator(); it.hasNext();) attributes.removeNamedItem(it.next());
 		if (attributes.getLength() > 3) rdf_EmptyPropertyElement(xmp, xmpParent, xmlNode, isTopLevel);
 		else {
 			for (int i = 0; i < attributes.getLength(); i++) {
@@ -231,10 +222,9 @@ public class ParseRDF implements XMPError, XMPConst {
 		for (int i = 0; i < xmlNode.getAttributes().getLength(); i++) {
 			Node attribute = xmlNode.getAttributes().item(i);
 			if ("xmlns".equals(attribute.getPrefix()) || (attribute.getPrefix() == null && "xmlns".equals(attribute.getNodeName()))) continue;
-			String attrNS = attribute.getNamespaceURI();
 			String attrLocal = attribute.getLocalName();
 			if (XML_LANG.equals(attribute.getNodeName())) addQualifierNode(newChild, XML_LANG, attribute.getNodeValue());
-			else if (NS_RDF.equals(attrNS) && ("ID".equals(attrLocal) || "datatype".equals(attrLocal))) continue;
+			else if (NS_RDF.equals(attribute.getNamespaceURI()) && ("ID".equals(attrLocal) || "datatype".equals(attrLocal))) continue;
 			else throw new XMPException("Invalid attribute for literal property element", BADRDF);
 		}
 		String textValue = "";
@@ -257,9 +247,8 @@ public class ParseRDF implements XMPError, XMPConst {
 			Node attribute = xmlNode.getAttributes().item(i);
 			if ("xmlns".equals(attribute.getPrefix()) || (attribute.getPrefix() == null && "xmlns".equals(attribute.getNodeName()))) continue;
 			String attrLocal = attribute.getLocalName();
-			String attrNS = attribute.getNamespaceURI();
 			if (XML_LANG.equals(attribute.getNodeName())) addQualifierNode(newStruct, XML_LANG, attribute.getNodeValue());
-			else if (NS_RDF.equals(attrNS) && ("ID".equals(attrLocal) || "parseType".equals(attrLocal))) continue;
+			else if (NS_RDF.equals(attribute.getNamespaceURI()) && ("ID".equals(attrLocal) || "parseType".equals(attrLocal))) continue;
 			else throw new XMPException("Invalid attribute for ParseTypeResource property element", BADRDF);
 		}
 		rdf_PropertyElementList(xmp, newStruct, xmlNode, false);
@@ -280,14 +269,11 @@ public class ParseRDF implements XMPError, XMPConst {
 		boolean hasNodeIDAttr = false;
 		boolean hasValueAttr = false;
 		Node valueNode = null;
-		if (xmlNode.hasChildNodes())
-			throw new XMPException("Nested content not allowed with rdf:resource or property attributes", BADRDF);
+		if (xmlNode.hasChildNodes()) throw new XMPException("Nested content not allowed with rdf:resource or property attributes", BADRDF);
 		for (int i = 0; i < xmlNode.getAttributes().getLength(); i++) {
 			Node attribute = xmlNode.getAttributes().item(i);
-			if ("xmlns".equals(attribute.getPrefix()) || (attribute.getPrefix() == null && "xmlns".equals(attribute.getNodeName())))
-				continue;
-			int attrTerm = getRDFTermKind(attribute);
-			switch (attrTerm) {
+			if ("xmlns".equals(attribute.getPrefix()) || (attribute.getPrefix() == null && "xmlns".equals(attribute.getNodeName()))) continue;
+			switch (getRDFTermKind(attribute)) {
 			case RDFTERM_ID: break;
 			case RDFTERM_RESOURCE:
 				if (hasNodeIDAttr) throw new XMPException("Empty property element can't have both rdf:resource and rdf:nodeID", BADRDF);
@@ -328,8 +314,7 @@ public class ParseRDF implements XMPError, XMPConst {
 					"xmlns".equals(attribute.getNodeName())
 				)
 			) continue;
-			int attrTerm = getRDFTermKind(attribute);
-			switch (attrTerm) {
+			switch (getRDFTermKind(attribute)) {
 			case RDFTERM_ID:
 			case RDFTERM_NODE_ID: break;
 			case RDFTERM_RESOURCE:
@@ -359,11 +344,10 @@ public class ParseRDF implements XMPError, XMPConst {
 			}
 			childName = prefix + xmlNode.getLocalName();
 		} else throw new XMPException("XML namespace required for all elements and attributes", BADRDF);
-		PropertyOptions childOptions = new PropertyOptions();
 		boolean isAlias = false;
 		if (isTopLevel) {
 			XMPNode schemaNode = XMPNodeUtils.findSchemaNode(xmp.getRoot(), namespace, DEFAULT_PREFIX, true);
-			schemaNode.setImplicit(false); // Clear the implicit node bit.
+			schemaNode.setImplicit(false);
 			xmpParent = schemaNode;
 			if (registry.findAlias(childName) != null) {
 				isAlias = true;
@@ -371,9 +355,8 @@ public class ParseRDF implements XMPError, XMPConst {
 				schemaNode.setHasAliases(true);
 			}
 		}
-		boolean isArrayItem = "rdf:li".equals(childName);
 		boolean isValueNode = "rdf:value".equals(childName);
-		XMPNode newChild = new XMPNode(childName, value, childOptions);
+		XMPNode newChild = new XMPNode(childName, value, new PropertyOptions());
 		newChild.setAlias(isAlias);
 		if (!isValueNode) xmpParent.addChild(newChild);
 		else xmpParent.addChild(1, newChild);
@@ -381,7 +364,7 @@ public class ParseRDF implements XMPError, XMPConst {
 			if (isTopLevel || !xmpParent.getOptions().isStruct()) throw new XMPException("Misplaced rdf:value element", BADRDF);
 			xmpParent.setHasValueChild(true);
 		}
-		if (isArrayItem) {
+		if ("rdf:li".equals(childName)) {
 			if (!xmpParent.getOptions().isArray()) throw new XMPException("Misplaced rdf:li element", BADRDF);
 			newChild.setName(ARRAY_ITEM_NAME);
 		}
@@ -389,9 +372,7 @@ public class ParseRDF implements XMPError, XMPConst {
 	}
 
 	private static XMPNode addQualifierNode(XMPNode xmpParent, String name, String value) throws XMPException {
-		boolean isLang = XML_LANG.equals(name);
-		XMPNode newQual = null;
-		newQual = new XMPNode(name, isLang ? Utils.normalizeLangValue(value) : value, null);
+		XMPNode newQual = new XMPNode(name, XML_LANG.equals(name)? Utils.normalizeLangValue(value) : value, null);
 		xmpParent.addQualifier(newQual);
 		return newQual;
 	}

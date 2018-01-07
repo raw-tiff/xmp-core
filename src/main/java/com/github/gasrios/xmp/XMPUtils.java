@@ -19,18 +19,23 @@ public class XMPUtils {
 	private XMPUtils() {}
 
 	public static String catenateArrayItems(XMPMeta xmp, String schemaNS, String arrayName, String separator, String quotes, boolean allowCommas)
-			throws XMPException {
+	throws XMPException {
 		return XMPUtilsImpl.catenateArrayItems(xmp, schemaNS, arrayName, separator, quotes, allowCommas);
 	}
 
 	public static void separateArrayItems(
-			XMPMeta xmp, String schemaNS, String arrayName, String catedStr, PropertyOptions arrayOptions, boolean preserveCommas)
-					throws XMPException {
+		XMPMeta xmp,
+		String schemaNS,
+		String arrayName,
+		String catedStr,
+		PropertyOptions arrayOptions,
+		boolean preserveCommas)
+	throws XMPException {
 		XMPUtilsImpl.separateArrayItems(xmp, schemaNS, arrayName, catedStr, arrayOptions, preserveCommas);
 	}
 
 	public static void removeProperties(XMPMeta xmp, String schemaNS, String propName, boolean doAllProperties, boolean includeAliases)
-			throws XMPException {
+	throws XMPException {
 		XMPUtilsImpl.removeProperties(xmp, schemaNS, propName, doAllProperties, includeAliases);
 	}
 
@@ -38,8 +43,8 @@ public class XMPUtils {
 		appendProperties(source, dest, doAllProperties, replaceOldValues, false);
 	}
 
-	public static void appendProperties(XMPMeta source, XMPMeta dest, boolean doAllProperties, boolean replaceOldValues,
-			boolean deleteEmptyValues) throws XMPException {
+	public static void appendProperties(XMPMeta source, XMPMeta dest, boolean doAllProperties, boolean replaceOldValues, boolean deleteEmptyValues)
+	throws XMPException {
 		XMPUtilsImpl.appendProperties(source, dest, doAllProperties, replaceOldValues, deleteEmptyValues);
 	}
 
